@@ -73,6 +73,18 @@
     .delete-btn:hover {
       background-color: #c0392b;
     }
+    .edit-btn {
+      background-color: #27ae60;
+      border: none;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+    .edit-btn:hover {
+      background-color: #1e8449;
+    }
     .account-summary {
       border: 1px solid #bdc3c7;
       margin: 10px 0;
@@ -453,6 +465,8 @@
         const balText = (acc.balance !== null && !isNaN(acc.balance)) ? `$${acc.balance.toFixed(2)}` : "N/A (Will use paycheck amount)";
         const li = document.createElement('li');
         li.innerHTML = `<span class="item-text">${acc.name} - Balance: ${balText}</span>`;
+        
+        // Delete button
         const delBtn = document.createElement('button');
         delBtn.textContent = "Delete";
         delBtn.classList.add('delete-btn');
@@ -466,6 +480,26 @@
           updateExpenseList();
         });
         li.appendChild(delBtn);
+        
+        // Edit button for updating balance
+        const editBtn = document.createElement('button');
+        editBtn.textContent = "Edit";
+        editBtn.classList.add('edit-btn');
+        editBtn.addEventListener('click', function() {
+          let newBalance = prompt("Enter new balance for " + acc.name, acc.balance !== null ? acc.balance : "");
+          if(newBalance !== null) {
+            newBalance = parseFloat(newBalance);
+            if(isNaN(newBalance)) {
+              alert("Please enter a valid number.");
+            } else {
+              acc.balance = newBalance;
+              updateBankAccountList();
+              updateBankAccountDropdowns();
+            }
+          }
+        });
+        li.appendChild(editBtn);
+        
         bankList.appendChild(li);
       });
     }
