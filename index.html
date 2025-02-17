@@ -495,6 +495,7 @@
     
     /**************************************************************
      * Update Recurring Bills list UI.
+     * Uses getCycleDaysInMonth() to compute the effective due date.
      **************************************************************/
     function updateBillList() {
       const billList = document.getElementById('billList');
@@ -660,6 +661,9 @@
     
     /**************************************************************
      * Helper: Compute next payday difference (in days) from the selected day.
+     * Updated for 1st and 15th paydays:
+     * - If the cycle is in the first period, the period runs from Day 1 to Day 14.
+     * - If in the second period, the period runs from Day 15 to the last day.
      **************************************************************/
     function computeNextPaydayDiff(selectedDay, daysInMonth) {
       let differences = [];
@@ -668,15 +672,15 @@
         if(pd.type === 'specific'){
           let pdDay = effectiveDueDate(pd.day, daysInMonth);
           if(pdDay >= selectedDay) {
-            diff = pdDay - selectedDay;
+             diff = pdDay - selectedDay;
           } else {
-            diff = (daysInMonth - selectedDay) + pdDay;
+             diff = (daysInMonth - selectedDay) + pdDay;
           }
         } else if(pd.type === '1st15'){
           if(selectedDay < 15) {
-            diff = 15 - selectedDay;
+             diff = 14 - selectedDay; // first period: 1 to 14
           } else {
-            diff = (daysInMonth - selectedDay) + 1;
+             diff = daysInMonth - selectedDay; // second period: 15 to last day
           }
         } else if(pd.type === 'daily'){
           diff = 1;
@@ -685,9 +689,9 @@
         } else if(pd.type === 'monthly'){
           let pdDay = daysInMonth;
           if(selectedDay <= pdDay) {
-            diff = pdDay - selectedDay;
+             diff = pdDay - selectedDay;
           } else {
-            diff = (daysInMonth - selectedDay) + pdDay;
+             diff = (daysInMonth - selectedDay) + pdDay;
           }
         }
         differences.push(diff);
@@ -709,61 +713,14 @@
     }
     
     /**************************************************************
-     * Helper: Get the most recent paycheck amount based on selectedDay.
-     **************************************************************/
-    function getMostRecentPaycheck(selectedDay, daysInMonth) {
-      let recent = null;
-      let recentEffectiveDay = -1;
-      paydays.forEach(pd => {
-        let effDay;
-        if(pd.type === 'specific'){
-          effDay = effectiveDueDate(pd.day, daysInMonth);
-        } else if(pd.type === '1st15'){
-          effDay = (selectedDay >= 15) ? 15 : 1;
-        } else if(pd.type === 'daily'){
-          effDay = selectedDay;
-        } else if(pd.type === 'weekly'){
-          effDay = (selectedDay > 7) ? (selectedDay - 7) : selectedDay;
-        } else if(pd.type === 'monthly'){
-          effDay = daysInMonth;
-        }
-        if(effDay <= selectedDay && effDay > recentEffectiveDay) {
-          recentEffectiveDay = effDay;
-          recent = pd;
-        }
-      });
-      if(!recent) {
-        paydays.forEach(pd => {
-          let effDay;
-          if(pd.type === 'specific'){
-            effDay = effectiveDueDate(pd.day, daysInMonth);
-          } else if(pd.type === '1st15'){
-            effDay = 15;
-          } else if(pd.type === 'daily'){
-            effDay = selectedDay;
-          } else if(pd.type === 'weekly'){
-            effDay = selectedDay;
-          } else if(pd.type === 'monthly'){
-            effDay = daysInMonth;
-          }
-          if(effDay > recentEffectiveDay) {
-            recentEffectiveDay = effDay;
-            recent = pd;
-          }
-        });
-      }
-      return recent ? recent.paycheckAmount : 0;
-    }
-    
-    /**************************************************************
      * Calculation and Totals:
-     * Reads the selected cycle date, extracts the day and month details,
-     * and calculates:
-     *   - Required Balances (displayed in "Required Balances Summary")
-     *   - Expense Totals for the current pay period and for the entire month,
-     *     both overall and broken down by bank account (displayed in "Expense Totals")
-     * Also, for each bank account in the Required Balances Summary, it lists all
-     * scheduled recurring bills and periodic expenses.
+     * Reads the selected cycle date from the calendar, and if a "1st15"
+     * payday exists, snaps the selected day to the appropriate boundary:
+     *   - If the cycle date is before the 15th, it uses Day 1.
+     *   - Otherwise, it uses Day 15.
+     * Then it computes:
+     *   - Required Balances (and lists each scheduled bill/expense by bank)
+     *   - Expense Totals for the current pay period and for the entire month.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -772,8 +729,17 @@
         return;
       }
       const cycleDate = new Date(cycleDateStr);
-      const selectedDay = cycleDate.getDate();
+      let selectedDay = cycleDate.getDate();
       const currentDaysInMonth = new Date(cycleDate.getFullYear(), cycleDate.getMonth()+1, 0).getDate();
+      
+      // If a 1st and 15th payday exists, snap the cycle date to its pay-period boundary.
+      if (paydays.some(pd => pd.type === '1st15')) {
+        if(selectedDay < 15) {
+          selectedDay = 1;
+        } else {
+          selectedDay = 15;
+        }
+      }
       
       if (paydays.length === 0) {
         alert("Please add at least one payday.");
@@ -785,7 +751,7 @@
       let daysRemaining = (periodEnd <= currentDaysInMonth) ? (periodEnd - selectedDay) : ((currentDaysInMonth - selectedDay) + (periodEnd - currentDaysInMonth));
       if(daysRemaining === 0) daysRemaining = 1;
       
-      // Calculate Required Balances
+      // Calculate Required Balances and list scheduled bills/expenses by bank.
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
       let overallCombined = 0;
@@ -805,7 +771,6 @@
                 totalPeriodic += exp.amount;
               }
             } else {
-              // For any one-time expense not flagged by occurrence or specific
               if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
                 totalPeriodic += exp.amount;
               }
@@ -845,19 +810,17 @@
           accountDiv.appendChild(alertPara);
         }
         
-        // List each bill/expense scheduled for this account:
+        // List scheduled bills and expenses for this account:
         const listHeader = document.createElement('p');
-        listHeader.textContent = "Upcoming Bills/Expenses:";
+        listHeader.textContent = "Scheduled Bills/Expenses:";
         accountDiv.appendChild(listHeader);
         
         const list = document.createElement('ul');
-        // Recurring Bills
         billsForAccount.forEach(bill => {
           const li = document.createElement('li');
           li.textContent = `${bill.name} - $${bill.amount.toFixed(2)} due on Day ${effectiveDueDate(bill.dueDate, currentDaysInMonth)}`;
           list.appendChild(li);
         });
-        // Periodic Expenses (list all that are scheduled in this pay period)
         oneTimeExpenses.forEach(exp => {
           if(exp.bankAccountId === account.id && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
             let expText = "";
