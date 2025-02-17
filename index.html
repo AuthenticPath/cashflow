@@ -140,6 +140,32 @@
       margin-top: 10px;
       font-weight: bold;
     }
+    /* Locked Distribution List styling */
+    #lockedDistributionContainer {
+      margin-top: 10px;
+      border-top: 1px dashed #ccc;
+      padding-top: 10px;
+    }
+    .locked-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #dff0d8;
+      padding: 5px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+    .locked-delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .locked-delete-btn:hover {
+      background-color: #c0392b;
+    }
   </style>
 </head>
 <body>
@@ -234,6 +260,10 @@
     <div id="customAllocationFields" class="hidden">
       <!-- Custom allocation inputs will be generated here -->
       <div id="customAllocationCounter">Remaining to distribute: $0</div>
+      <!-- New "Add Distribution" button -->
+      <button type="button" id="addDistributionBtn">Add Distribution</button>
+      <!-- Container to display locked custom distribution -->
+      <div id="lockedDistributionContainer"></div>
     </div>
     <div id="singleAccountSelectorContainer" class="hidden">
       <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
@@ -353,8 +383,7 @@
 
   <script>
     /**************************************************************
-     * Data storage arrays for bank accounts, recurring bills,
-     * periodic expenses, and paydays.
+     * Global variables and data storage.
      **************************************************************/
     let bankAccounts = [];
     let recurringBills = [];
@@ -362,6 +391,7 @@
     let paydays = [];
     let balanceTrackingEnabled = false;
     let tempExpenseMonths = [];
+    let lockedDistribution = {}; // Holds locked custom distribution values
 
     /**************************************************************
      * Helper: Get days in month based on the selected cycle date.
@@ -377,7 +407,7 @@
 
     /**************************************************************
      * Helper: Get the most recent payday day (start of pay period) based on selected day.
-     * Added fallback so that it always returns a number.
+     * Fallback ensures a number is returned.
      **************************************************************/
     function getMostRecentPaydayDay(selectedDay, daysInMonth) {
       let recentDay = null;
@@ -481,6 +511,21 @@
       counterDiv.id = "customAllocationCounter";
       counterDiv.textContent = "Remaining to distribute: $0";
       customAllocDiv.appendChild(counterDiv);
+      // Add the "Add Distribution" button if not already added.
+      if(!document.getElementById('addDistributionBtn')) {
+        const addBtn = document.createElement('button');
+        addBtn.type = "button";
+        addBtn.id = "addDistributionBtn";
+        addBtn.textContent = "Add Distribution";
+        addBtn.addEventListener('click', lockCustomDistribution);
+        customAllocDiv.appendChild(addBtn);
+      }
+      // Also add the container for locked distribution.
+      if(!document.getElementById('lockedDistributionContainer')) {
+        const lockDiv = document.createElement('div');
+        lockDiv.id = "lockedDistributionContainer";
+        customAllocDiv.appendChild(lockDiv);
+      }
     }
 
     function updateCustomAllocationCounter() {
@@ -496,6 +541,64 @@
       const counterElem = document.getElementById('customAllocationCounter');
       if(counterElem) {
         counterElem.textContent = "Remaining to distribute: $" + remaining.toFixed(2);
+      }
+    }
+
+    /**************************************************************
+     * Lock (Add) the custom distribution.
+     **************************************************************/
+    function lockCustomDistribution() {
+      // Gather custom allocation amounts.
+      let target = paydays.length > 0 ? paydays[0].paycheckAmount : 0;
+      let total = 0;
+      let allocations = {};
+      bankAccounts.forEach(account => {
+        let input = document.getElementById('customAlloc_' + account.id);
+        let val = input && input.value ? parseFloat(input.value) : 0;
+        allocations[account.id] = val;
+        total += val;
+      });
+      if(Math.abs(total - target) > 0.01) {
+        alert("The total of custom allocations must equal the paycheck amount of $" + target.toFixed(2) + ". Current total: $" + total.toFixed(2));
+        return;
+      }
+      // Lock the distribution.
+      lockedDistribution = allocations;
+      // Disable the custom allocation inputs.
+      bankAccounts.forEach(account => {
+        let input = document.getElementById('customAlloc_' + account.id);
+        if(input) {
+          input.disabled = true;
+        }
+      });
+      updateLockedDistributionDisplay();
+    }
+
+    function updateLockedDistributionDisplay() {
+      const container = document.getElementById('lockedDistributionContainer');
+      container.innerHTML = "";
+      for(let accId in lockedDistribution) {
+        let amount = lockedDistribution[accId];
+        let account = bankAccounts.find(a => a.id === accId);
+        let div = document.createElement('div');
+        div.classList.add('locked-item');
+        div.innerHTML = `<span>${account.name}: $${amount.toFixed(2)}</span>`;
+        let delBtn = document.createElement('button');
+        delBtn.classList.add('locked-delete-btn');
+        delBtn.textContent = "Delete";
+        delBtn.addEventListener('click', function() {
+          // Remove locked allocation for this account and re-enable input.
+          delete lockedDistribution[accId];
+          let input = document.getElementById('customAlloc_' + accId);
+          if(input) {
+            input.disabled = false;
+            input.value = "";
+          }
+          updateCustomAllocationCounter();
+          updateLockedDistributionDisplay();
+        });
+        div.appendChild(delBtn);
+        container.appendChild(div);
       }
     }
 
@@ -943,8 +1046,7 @@
      * - The pay period range now displays the full period (from the last payday to the next).
      * - In Required Balances Summary, if tracking is enabled and an account has surplus funds,
      *   the surplus and extra daily discretionary spending (over the remaining days) is displayed.
-     * - IMPORTANT: For pay period calculations, we now use periodStart (the most recent payday)
-     *   as the lower bound rather than the cycle date.
+     * - For pay period calculations, we now use periodStart (the most recent payday) as the lower bound.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -1045,7 +1147,6 @@
           }
         }
         let availableFunds = balanceTrackingEnabled ? (startingBalance + allocated) : ((account.balance !== null && !isNaN(account.balance)) ? account.balance : 0);
-
         const billsForAccount = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id && isDueWithin(bill.dueDate, periodStart, periodEnd, currentDaysInMonth);
         });
@@ -1073,7 +1174,6 @@
         overallCombined += totalRequired;
         const leftover = availableFunds - totalRequired;
         const dailyExtra = leftover > 0 ? (leftover / remainingDays).toFixed(2) : 0;
-
         const accountDiv = document.createElement('div');
         accountDiv.classList.add('account-summary');
         const header = document.createElement('h3');
@@ -1130,7 +1230,6 @@
         accountDiv.appendChild(list);
         resultsDiv.appendChild(accountDiv);
       });
-
       // Expense Totals Calculations:
       let payPeriodTotals = {};
       let monthlyTotals = {};
