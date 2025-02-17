@@ -925,7 +925,7 @@
         combinedMonthly += monthlyTotals[id];
       }
 
-      document.getElementById('payPeriodCombined').innerHTML = `<strong>Combined Pay-Period Total:</strong> $${combinedPayPeriod.toFixed(2)}`;
+      document.getElementById('payPeriodCombined').innerHTML = `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}`;
       let payPeriodBankList = "<ul class='totals-list'>";
       bankAccounts.forEach(acc => {
         payPeriodBankList += `<li>${acc.name}: $${payPeriodTotals[acc.id].toFixed(2)}</li>`;
