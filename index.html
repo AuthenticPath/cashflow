@@ -148,32 +148,6 @@
     <ul id="paydayList"></ul>
   </section>
 
-  <!-- Bank Accounts Section -->
-  <section id="bank-accounts">
-    <h2>Bank Accounts</h2>
-    <form id="bankAccountForm">
-      <input type="text" id="bankName" placeholder="Bank Account Name" required>
-      <input type="number" id="bankBalance" placeholder="Initial Balance (optional)" step="0.01">
-      <button type="submit">Add Bank Account</button>
-    </form>
-    <ul id="bankAccountList"></ul>
-  </section>
-
-  <!-- Recurring Bills Section -->
-  <section id="recurring-bills">
-    <h2>Recurring Bills</h2>
-    <form id="billForm">
-      <input type="text" id="billName" placeholder="Bill Name (e.g., Rent)" required>
-      <input type="number" id="billAmount" placeholder="Bill Amount" required step="0.01">
-      <input type="number" id="billDueDate" placeholder="Due Date (Day 1–31)" required min="1" max="31">
-      <select id="billBankAccount" required>
-        <option value="">Select Bank Account</option>
-      </select>
-      <button type="submit">Add Recurring Bill</button>
-    </form>
-    <ul id="billList"></ul>
-  </section>
-
   <!-- CSV Import Section for Recurring Bills -->
   <section id="csv-import">
     <h2>CSV Import for Recurring Bills</h2>
@@ -207,6 +181,32 @@
     <br>
     <label for="recurringCSV">Upload Recurring Bills CSV:</label>
     <input type="file" id="recurringCSV" accept=".csv">
+  </section>
+
+  <!-- Bank Accounts Section -->
+  <section id="bank-accounts">
+    <h2>Bank Accounts</h2>
+    <form id="bankAccountForm">
+      <input type="text" id="bankName" placeholder="Bank Account Name" required>
+      <input type="number" id="bankBalance" placeholder="Initial Balance (optional)" step="0.01">
+      <button type="submit">Add Bank Account</button>
+    </form>
+    <ul id="bankAccountList"></ul>
+  </section>
+
+  <!-- Recurring Bills Section -->
+  <section id="recurring-bills">
+    <h2>Recurring Bills</h2>
+    <form id="billForm">
+      <input type="text" id="billName" placeholder="Bill Name (e.g., Rent)" required>
+      <input type="number" id="billAmount" placeholder="Bill Amount" required step="0.01">
+      <input type="number" id="billDueDate" placeholder="Due Date (Day 1–31)" required min="1" max="31">
+      <select id="billBankAccount" required>
+        <option value="">Select Bank Account</option>
+      </select>
+      <button type="submit">Add Recurring Bill</button>
+    </form>
+    <ul id="billList"></ul>
   </section>
 
   <!-- Periodic Expenses Section -->
