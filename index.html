@@ -361,7 +361,6 @@
     let oneTimeExpenses = [];
     let paydays = [];
     let balanceTrackingEnabled = false;
-
     let tempExpenseMonths = [];
 
     /**************************************************************
@@ -433,16 +432,13 @@
     function updateBankAccountDropdowns() {
       const billSelect = document.getElementById('billBankAccount');
       const expenseSelect = document.getElementById('expenseBankAccount');
-
       billSelect.innerHTML = '<option value="">Select Bank Account</option>';
       expenseSelect.innerHTML = '<option value="">Select Bank Account</option>';
-
       bankAccounts.forEach(account => {
         const option1 = document.createElement('option');
         option1.value = account.id;
         option1.textContent = account.name;
         billSelect.appendChild(option1);
-
         const option2 = document.createElement('option');
         option2.value = account.id;
         option2.textContent = account.name;
@@ -947,6 +943,8 @@
      * - The pay period range now displays the full period (from the last payday to the next).
      * - In Required Balances Summary, if tracking is enabled and an account has surplus funds,
      *   the surplus and extra daily discretionary spending (over the remaining days) is displayed.
+     * - IMPORTANT: For pay period calculations, we now use periodStart (the most recent payday)
+     *   as the lower bound rather than the cycle date.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -998,7 +996,7 @@
       if(balanceTrackingEnabled) {
         bankAccounts.forEach(account => {
           const billsForAccount = recurringBills.filter(bill => {
-            return bill.bankAccountId === account.id && isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
+            return bill.bankAccountId === account.id && isDueWithin(bill.dueDate, periodStart, periodEnd, currentDaysInMonth);
           });
           let totalBills = 0;
           billsForAccount.forEach(bill => {
@@ -1010,11 +1008,11 @@
               if(exp.planType === 'occurrence' && exp.occurrences > 0) {
                 totalPeriodic += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
               } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-                if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+                if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
                   totalPeriodic += exp.amount;
                 }
               } else {
-                if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+                if(isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
                   totalPeriodic += exp.amount;
                 }
               }
@@ -1028,7 +1026,6 @@
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
       let overallCombined = 0;
-
       bankAccounts.forEach(account => {
         let startingBalance = (account.balance !== null && !isNaN(account.balance)) ? account.balance : (balanceTrackingEnabled ? 0 : 0);
         let allocated = 0;
@@ -1050,7 +1047,7 @@
         let availableFunds = balanceTrackingEnabled ? (startingBalance + allocated) : ((account.balance !== null && !isNaN(account.balance)) ? account.balance : 0);
 
         const billsForAccount = recurringBills.filter(bill => {
-          return bill.bankAccountId === account.id && isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
+          return bill.bankAccountId === account.id && isDueWithin(bill.dueDate, periodStart, periodEnd, currentDaysInMonth);
         });
         let totalBills = 0;
         billsForAccount.forEach(bill => {
@@ -1062,11 +1059,11 @@
             if(exp.planType === 'occurrence' && exp.occurrences > 0) {
               totalPeriodic += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
             } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-              if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+              if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
                 totalPeriodic += exp.amount;
               }
             } else {
-              if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+              if(isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
                 totalPeriodic += exp.amount;
               }
             }
@@ -1116,7 +1113,7 @@
           list.appendChild(li);
         });
         oneTimeExpenses.forEach(exp => {
-          if(exp.bankAccountId === account.id && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+          if(exp.bankAccountId === account.id && isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
             let expText = "";
             if(exp.planType === 'occurrence' && exp.occurrences > 0) {
               expText = `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${effectiveDueDate(exp.dueDate, currentDaysInMonth)} (Occurs ${exp.occurrences}x/yr)`;
@@ -1142,7 +1139,7 @@
         monthlyTotals[acc.id] = 0;
       });
       recurringBills.forEach(bill => {
-        if(isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+        if(isDueWithin(bill.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
           payPeriodTotals[bill.bankAccountId] += bill.amount;
         }
         monthlyTotals[bill.bankAccountId] += bill.amount;
@@ -1152,7 +1149,7 @@
           payPeriodTotals[exp.bankAccountId] += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
           monthlyTotals[exp.bankAccountId] += (exp.amount * exp.occurrences) / 12;
         } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-          if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+          if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
             payPeriodTotals[exp.bankAccountId] += exp.amount;
           }
           if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString())) {
