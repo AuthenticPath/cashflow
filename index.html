@@ -378,6 +378,7 @@
 
     /**************************************************************
      * Helper: Get the most recent payday day (start of pay period) based on selected day.
+     * Added fallback so that it always returns a number.
      **************************************************************/
     function getMostRecentPaydayDay(selectedDay, daysInMonth) {
       let recentDay = null;
@@ -419,6 +420,9 @@
             recentDay = effDay;
           }
         });
+      }
+      if(recentDay === null) {
+         recentDay = 1;
       }
       return recentDay;
     }
@@ -959,18 +963,17 @@
         return;
       }
 
-      // Determine the start of the pay period (most recent payday day)
+      // Determine the start of the pay period using the most recent payday day.
       const periodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
-      // Compute next payday difference from the cycle date
+      // Compute next payday difference from the cycle date.
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
-      // Full period length: from periodStart to periodEnd (wrap if needed)
+      // Full period length: from periodStart to periodEnd (with wrapping if necessary)
       let fullPeriodLength = (periodEnd >= periodStart) ? (periodEnd - periodStart + 1) : ((currentDaysInMonth - periodStart + 1) + periodEnd);
-      // Remaining days from cycle date to period end
+      // Remaining days from cycle date to period end.
       let remainingDays = (periodEnd >= selectedDay) ? (periodEnd - selectedDay + 1) : ((currentDaysInMonth - selectedDay + 1) + periodEnd);
 
       const periodEndDisplay = (periodEnd <= currentDaysInMonth) ? periodEnd : (periodEnd - currentDaysInMonth) + " [next cycle]";
-      // Display full pay period range (using periodStart, not the cycle date)
       document.getElementById('payPeriodRange').textContent = `(from Day ${periodStart} to Day ${periodEndDisplay} - Total: ${fullPeriodLength} days)`;
 
       let paycheck = getMostRecentPaycheck(selectedDay, currentDaysInMonth);
@@ -990,7 +993,7 @@
         }
       }
 
-      // Pre-calculate required expenses per account (for proportional allocation)
+      // Pre-calculate required expenses per account (for proportional allocation).
       let requiredExpenses = {};
       if(balanceTrackingEnabled) {
         bankAccounts.forEach(account => {
