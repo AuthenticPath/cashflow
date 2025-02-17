@@ -121,7 +121,7 @@
 </head>
 <body>
   <h1>Enhanced Cash Flow Manager</h1>
-  
+
   <!-- Paydays Section -->
   <section id="paydays">
     <h2>Paydays</h2>
@@ -147,7 +147,7 @@
     </form>
     <ul id="paydayList"></ul>
   </section>
-  
+
   <!-- Bank Accounts Section -->
   <section id="bank-accounts">
     <h2>Bank Accounts</h2>
@@ -158,7 +158,7 @@
     </form>
     <ul id="bankAccountList"></ul>
   </section>
-  
+
   <!-- Recurring Bills Section -->
   <section id="recurring-bills">
     <h2>Recurring Bills</h2>
@@ -173,7 +173,7 @@
     </form>
     <ul id="billList"></ul>
   </section>
-  
+
   <!-- CSV Import Section for Recurring Bills -->
   <section id="csv-import">
     <h2>CSV Import for Recurring Bills</h2>
@@ -208,7 +208,7 @@
     <label for="recurringCSV">Upload Recurring Bills CSV:</label>
     <input type="file" id="recurringCSV" accept=".csv">
   </section>
-  
+
   <!-- Periodic Expenses Section -->
   <section id="oneTime-expenses">
     <h2>Periodic Expenses</h2>
@@ -272,7 +272,7 @@
     </form>
     <ul id="expenseList"></ul>
   </section>
-  
+
   <!-- Calculate Required Balances Section -->
   <section id="calculation">
     <h2>Calculate Required Balances</h2>
@@ -280,13 +280,13 @@
     <input type="date" id="cycleDate" required>
     <button id="calculateButton">Calculate</button>
   </section>
-  
+
   <!-- Required Balances Summary Section -->
   <section id="output">
     <h2>Required Balances Summary</h2>
     <div id="results"></div>
   </section>
-  
+
   <!-- Expense Totals Section (Moved to bottom) -->
   <section id="expense-totals">
     <h2>Expense Totals</h2>
@@ -303,7 +303,7 @@
       <div id="monthlyByBank"></div>
     </div>
   </section>
-  
+
   <script>
     /**************************************************************
      * Data storage arrays for bank accounts, recurring bills,
@@ -313,10 +313,10 @@
     let recurringBills = [];
     let oneTimeExpenses = []; // periodic expenses
     let paydays = []; // Each payday: { id, type, day (if applicable), paycheckAmount }
-    
+
     // Temporary storage for specific months in periodic expense entry
     let tempExpenseMonths = [];
-    
+
     /**************************************************************
      * Helper: Get days in month based on the selected cycle date.
      * If no cycle date is selected, default to 31.
@@ -329,30 +329,30 @@
       }
       return 31;
     }
-    
+
     /**************************************************************
      * Utility: Update bank account dropdowns in bills and expenses.
      **************************************************************/
     function updateBankAccountDropdowns() {
       const billSelect = document.getElementById('billBankAccount');
       const expenseSelect = document.getElementById('expenseBankAccount');
-      
+
       billSelect.innerHTML = '<option value="">Select Bank Account</option>';
       expenseSelect.innerHTML = '<option value="">Select Bank Account</option>';
-      
+
       bankAccounts.forEach(account => {
         const option1 = document.createElement('option');
         option1.value = account.id;
         option1.textContent = account.name;
         billSelect.appendChild(option1);
-        
+
         const option2 = document.createElement('option');
         option2.value = account.id;
         option2.textContent = account.name;
         expenseSelect.appendChild(option2);
       });
     }
-    
+
     /**************************************************************
      * Show/hide the specific day input for paydays based on selection.
      **************************************************************/
@@ -364,7 +364,7 @@
         specificInput.classList.add('hidden');
       }
     });
-    
+
     /**************************************************************
      * Add a new Payday.
      **************************************************************/
@@ -391,13 +391,13 @@
       const id = Date.now().toString() + "_pd";
       paydays.push({ id, type, day, paycheckAmount });
       updatePaydayList();
-      
+
       document.getElementById('paydayType').value = "";
       document.getElementById('specificDay').value = "";
       document.getElementById('paycheckAmount').value = "";
       document.getElementById('specificDayInput').classList.add('hidden');
     });
-    
+
     /**************************************************************
      * Update the Payday list UI.
      **************************************************************/
@@ -427,7 +427,7 @@
         paydayList.appendChild(li);
       });
     }
-    
+
     /**************************************************************
      * Bank Account: Add a new bank account.
      **************************************************************/
@@ -443,7 +443,7 @@
       document.getElementById('bankName').value = '';
       document.getElementById('bankBalance').value = '';
     });
-    
+
     /**************************************************************
      * Update Bank Accounts list UI.
      **************************************************************/
@@ -470,7 +470,7 @@
         bankList.appendChild(li);
       });
     }
-    
+
     /**************************************************************
      * Recurring Bill: Add a new recurring bill.
      **************************************************************/
@@ -492,10 +492,9 @@
       document.getElementById('billDueDate').value = '';
       document.getElementById('billBankAccount').value = '';
     });
-    
+
     /**************************************************************
      * Update Recurring Bills list UI.
-     * Uses getCycleDaysInMonth() to compute the effective due date.
      **************************************************************/
     function updateBillList() {
       const billList = document.getElementById('billList');
@@ -517,7 +516,7 @@
         billList.appendChild(li);
       });
     }
-    
+
     /**************************************************************
      * Expense Plan Type toggle: Show/hide Occurrence vs Specific Months.
      **************************************************************/
@@ -533,7 +532,7 @@
         }
       });
     });
-    
+
     /**************************************************************
      * Specific Months: Add month selection for periodic expense.
      **************************************************************/
@@ -545,7 +544,7 @@
         updateExpenseMonthsList();
       }
     });
-    
+
     function updateExpenseMonthsList() {
       const list = document.getElementById('expenseMonthsList');
       list.innerHTML = "";
@@ -563,12 +562,12 @@
         list.appendChild(li);
       });
     }
-    
+
     function monthName(m) {
       const names = ["January","February","March","April","May","June","July","August","September","October","November","December"];
       return names[m - 1] || "";
     }
-    
+
     /**************************************************************
      * Periodic Expense: Add a new periodic expense.
      **************************************************************/
@@ -604,7 +603,7 @@
       document.getElementById('occurrenceSection').classList.remove('hidden');
       document.getElementById('specificMonthsSection').classList.add('hidden');
     });
-    
+
     /**************************************************************
      * Update Periodic Expenses list UI.
      **************************************************************/
@@ -635,7 +634,7 @@
         expenseList.appendChild(li);
       });
     }
-    
+
     /**************************************************************
      * Helper: For bills due on 29-31 in a month with fewer days,
      * return the effective due date.
@@ -643,7 +642,7 @@
     function effectiveDueDate(dueDate, daysInMonth) {
       return (dueDate > daysInMonth) ? daysInMonth : dueDate;
     }
-    
+
     /**************************************************************
      * Helper: Compute expected pay periods per year based on paydays.
      **************************************************************/
@@ -658,12 +657,13 @@
       }
       return periods;
     }
-    
+
     /**************************************************************
      * Helper: Compute next payday difference (in days) from the selected day.
-     * Updated for 1st and 15th paydays:
-     * - If the cycle is in the first period, the period runs from Day 1 to Day 14.
-     * - If in the second period, the period runs from Day 15 to the last day.
+     * 
+     * Updated for 1st/15th pay periods: When the selected day is >=15, the 
+     * diff is now calculated as (daysInMonth - selectedDay) (i.e. no +1), ensuring
+     * that Day 1 expenses are excluded.
      **************************************************************/
     function computeNextPaydayDiff(selectedDay, daysInMonth) {
       let differences = [];
@@ -671,16 +671,17 @@
         let diff = 0;
         if(pd.type === 'specific'){
           let pdDay = effectiveDueDate(pd.day, daysInMonth);
-          if(pdDay >= selectedDay) {
-             diff = pdDay - selectedDay;
+          if(pdDay >= selectedDay){
+            diff = pdDay - selectedDay;
           } else {
-             diff = (daysInMonth - selectedDay) + pdDay;
+            diff = (daysInMonth - selectedDay) + pdDay;
           }
         } else if(pd.type === '1st15'){
-          if(selectedDay < 15) {
-             diff = 14 - selectedDay; // first period: 1 to 14
+          if(selectedDay < 15){
+            diff = 15 - selectedDay;
           } else {
-             diff = daysInMonth - selectedDay; // second period: 15 to last day
+            // Removed the "+1" here so the period ends on the last day of the month.
+            diff = daysInMonth - selectedDay;
           }
         } else if(pd.type === 'daily'){
           diff = 1;
@@ -688,17 +689,17 @@
           diff = 7;
         } else if(pd.type === 'monthly'){
           let pdDay = daysInMonth;
-          if(selectedDay <= pdDay) {
-             diff = pdDay - selectedDay;
+          if(selectedDay <= pdDay){
+            diff = pdDay - selectedDay;
           } else {
-             diff = (daysInMonth - selectedDay) + pdDay;
+            diff = (daysInMonth - selectedDay) + pdDay;
           }
         }
         differences.push(diff);
       });
       return Math.min(...differences);
     }
-    
+
     /**************************************************************
      * Helper: Determine if a given due date is within the period from 
      * selectedDay to periodEnd (accounting for wrapping).
@@ -711,16 +712,63 @@
         return (effDue >= selectedDay && effDue <= daysInMonth) || (effDue >= 1 && effDue <= periodEnd - daysInMonth);
       }
     }
-    
+
+    /**************************************************************
+     * Helper: Get the most recent paycheck amount based on selectedDay.
+     **************************************************************/
+    function getMostRecentPaycheck(selectedDay, daysInMonth) {
+      let recent = null;
+      let recentEffectiveDay = -1;
+      paydays.forEach(pd => {
+        let effDay;
+        if(pd.type === 'specific'){
+          effDay = effectiveDueDate(pd.day, daysInMonth);
+        } else if(pd.type === '1st15'){
+          effDay = (selectedDay >= 15) ? 15 : 1;
+        } else if(pd.type === 'daily'){
+          effDay = selectedDay;
+        } else if(pd.type === 'weekly'){
+          effDay = (selectedDay > 7) ? (selectedDay - 7) : selectedDay;
+        } else if(pd.type === 'monthly'){
+          effDay = daysInMonth;
+        }
+        if(effDay <= selectedDay && effDay > recentEffectiveDay) {
+          recentEffectiveDay = effDay;
+          recent = pd;
+        }
+      });
+      if(!recent) {
+        paydays.forEach(pd => {
+          let effDay;
+          if(pd.type === 'specific'){
+            effDay = effectiveDueDate(pd.day, daysInMonth);
+          } else if(pd.type === '1st15'){
+            effDay = 15;
+          } else if(pd.type === 'daily'){
+            effDay = selectedDay;
+          } else if(pd.type === 'weekly'){
+            effDay = selectedDay;
+          } else if(pd.type === 'monthly'){
+            effDay = daysInMonth;
+          }
+          if(effDay > recentEffectiveDay) {
+            recentEffectiveDay = effDay;
+            recent = pd;
+          }
+        });
+      }
+      return recent ? recent.paycheckAmount : 0;
+    }
+
     /**************************************************************
      * Calculation and Totals:
-     * Reads the selected cycle date from the calendar, and if a "1st15"
-     * payday exists, snaps the selected day to the appropriate boundary:
-     *   - If the cycle date is before the 15th, it uses Day 1.
-     *   - Otherwise, it uses Day 15.
-     * Then it computes:
-     *   - Required Balances (and lists each scheduled bill/expense by bank)
-     *   - Expense Totals for the current pay period and for the entire month.
+     * Reads the selected cycle date, extracts the day and month details,
+     * and calculates:
+     *   - Required Balances (displayed in "Required Balances Summary")
+     *   - Expense Totals for the current pay period and for the entire month,
+     *     both overall and broken down by bank account (displayed in "Expense Totals")
+     * Also, for each bank account in the Required Balances Summary, it lists all
+     * scheduled recurring bills and periodic expenses.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -729,33 +777,24 @@
         return;
       }
       const cycleDate = new Date(cycleDateStr);
-      let selectedDay = cycleDate.getDate();
+      const selectedDay = cycleDate.getDate();
       const currentDaysInMonth = new Date(cycleDate.getFullYear(), cycleDate.getMonth()+1, 0).getDate();
-      
-      // If a 1st and 15th payday exists, snap the cycle date to its pay-period boundary.
-      if (paydays.some(pd => pd.type === '1st15')) {
-        if(selectedDay < 15) {
-          selectedDay = 1;
-        } else {
-          selectedDay = 15;
-        }
-      }
-      
+
       if (paydays.length === 0) {
         alert("Please add at least one payday.");
         return;
       }
-      
+
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
       let daysRemaining = (periodEnd <= currentDaysInMonth) ? (periodEnd - selectedDay) : ((currentDaysInMonth - selectedDay) + (periodEnd - currentDaysInMonth));
       if(daysRemaining === 0) daysRemaining = 1;
-      
-      // Calculate Required Balances and list scheduled bills/expenses by bank.
+
+      // Calculate Required Balances
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
       let overallCombined = 0;
-      
+
       bankAccounts.forEach(account => {
         let availableFunds = (account.balance !== null && !isNaN(account.balance)) ? account.balance : getMostRecentPaycheck(selectedDay, currentDaysInMonth);
         const billsForAccount = recurringBills.filter(bill => {
@@ -771,6 +810,7 @@
                 totalPeriodic += exp.amount;
               }
             } else {
+              // For any one-time expense not flagged by occurrence or specific
               if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
                 totalPeriodic += exp.amount;
               }
@@ -785,7 +825,7 @@
         overallCombined += totalRequired;
         const leftover = availableFunds - totalRequired;
         const dailySpending = leftover > 0 ? (leftover / daysRemaining).toFixed(2) : 0;
-        
+
         const accountDiv = document.createElement('div');
         accountDiv.classList.add('account-summary');
         const header = document.createElement('h3');
@@ -809,18 +849,20 @@
           alertPara.textContent = "Insufficient funds! Consider transferring additional funds.";
           accountDiv.appendChild(alertPara);
         }
-        
-        // List scheduled bills and expenses for this account:
+
+        // List each bill/expense scheduled for this account:
         const listHeader = document.createElement('p');
-        listHeader.textContent = "Scheduled Bills/Expenses:";
+        listHeader.textContent = "Upcoming Bills/Expenses:";
         accountDiv.appendChild(listHeader);
-        
+
         const list = document.createElement('ul');
+        // Recurring Bills
         billsForAccount.forEach(bill => {
           const li = document.createElement('li');
           li.textContent = `${bill.name} - $${bill.amount.toFixed(2)} due on Day ${effectiveDueDate(bill.dueDate, currentDaysInMonth)}`;
           list.appendChild(li);
         });
+        // Periodic Expenses (list all that are scheduled in this pay period)
         oneTimeExpenses.forEach(exp => {
           if(exp.bankAccountId === account.id && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
             let expText = "";
@@ -839,18 +881,18 @@
         accountDiv.appendChild(list);
         resultsDiv.appendChild(accountDiv);
       });
-      
+
       // ---------------------------
       // Expense Totals Calculations:
       // ---------------------------
       let payPeriodTotals = {};
       let monthlyTotals = {};
-      
+
       bankAccounts.forEach(acc => {
         payPeriodTotals[acc.id] = 0;
         monthlyTotals[acc.id] = 0;
       });
-      
+
       // Recurring bills:
       recurringBills.forEach(bill => {
         if(isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
@@ -858,7 +900,7 @@
         }
         monthlyTotals[bill.bankAccountId] += bill.amount;
       });
-      
+
       // Periodic expenses:
       oneTimeExpenses.forEach(exp => {
         if(exp.planType === 'occurrence' && exp.occurrences > 0) {
@@ -873,7 +915,7 @@
           }
         }
       });
-      
+
       let combinedPayPeriod = 0;
       let combinedMonthly = 0;
       for (let id in payPeriodTotals) {
@@ -882,7 +924,7 @@
       for (let id in monthlyTotals) {
         combinedMonthly += monthlyTotals[id];
       }
-      
+
       document.getElementById('payPeriodCombined').innerHTML = `<strong>Combined Pay-Period Total:</strong> $${combinedPayPeriod.toFixed(2)}`;
       let payPeriodBankList = "<ul class='totals-list'>";
       bankAccounts.forEach(acc => {
@@ -890,7 +932,7 @@
       });
       payPeriodBankList += "</ul>";
       document.getElementById('payPeriodByBank').innerHTML = payPeriodBankList;
-      
+
       document.getElementById('monthlyCombined').innerHTML = `<strong>Combined Monthly Total:</strong> $${combinedMonthly.toFixed(2)}`;
       let monthlyBankList = "<ul class='totals-list'>";
       bankAccounts.forEach(acc => {
@@ -899,7 +941,7 @@
       monthlyBankList += "</ul>";
       document.getElementById('monthlyByBank').innerHTML = monthlyBankList;
     });
-    
+
     /**************************************************************
      * CSV Import for Recurring Bills:
      * Process and parse the CSV file uploaded via the #recurringCSV input.
@@ -908,13 +950,13 @@
     document.getElementById('recurringCSV').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
-      
+
       // File Validation: ensure .csv format
       if (!file.name.toLowerCase().endsWith('.csv')) {
         alert("Please upload a file in .csv format.");
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = function(evt) {
         try {
@@ -934,7 +976,7 @@
           }
           const data = [];
           const errors = [];
-          
+
           for (let i = 1; i < lines.length; i++) {
             const line = lines[i];
             if (line.trim() === "") continue;
@@ -975,12 +1017,12 @@
               bankAccountId: bankAcc.id
             });
           }
-          
+
           if (errors.length > 0) {
             alert("Errors found while parsing CSV:\n" + errors.join("\n"));
             return;
           }
-          
+
           data.forEach(bill => recurringBills.push(bill));
           updateBillList();
           alert("Recurring bills imported successfully.");
