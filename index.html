@@ -377,6 +377,53 @@
     }
 
     /**************************************************************
+     * Helper: Get the most recent payday day (start of pay period) based on selected day.
+     **************************************************************/
+    function getMostRecentPaydayDay(selectedDay, daysInMonth) {
+      let recentDay = null;
+      let recentEffective = -1;
+      paydays.forEach(pd => {
+        let effDay;
+        if(pd.type === 'specific'){
+          effDay = effectiveDueDate(pd.day, daysInMonth);
+        } else if(pd.type === '1st15'){
+          effDay = (selectedDay >= 15) ? 15 : 1;
+        } else if(pd.type === 'daily'){
+          effDay = selectedDay;
+        } else if(pd.type === 'weekly'){
+          effDay = (selectedDay > 7) ? (selectedDay - 7) : selectedDay;
+        } else if(pd.type === 'monthly'){
+          effDay = daysInMonth;
+        }
+        if(effDay <= selectedDay && effDay > recentEffective) {
+          recentEffective = effDay;
+          recentDay = effDay;
+        }
+      });
+      if(recentDay === null) {
+        paydays.forEach(pd => {
+          let effDay;
+          if(pd.type === 'specific'){
+            effDay = effectiveDueDate(pd.day, daysInMonth);
+          } else if(pd.type === '1st15'){
+            effDay = 15;
+          } else if(pd.type === 'daily'){
+            effDay = selectedDay;
+          } else if(pd.type === 'weekly'){
+            effDay = selectedDay;
+          } else if(pd.type === 'monthly'){
+            effDay = daysInMonth;
+          }
+          if(effDay > recentEffective) {
+            recentEffective = effDay;
+            recentDay = effDay;
+          }
+        });
+      }
+      return recentDay;
+    }
+
+    /**************************************************************
      * Utility: Update bank account dropdowns in bills and expenses.
      **************************************************************/
     function updateBankAccountDropdowns() {
@@ -430,7 +477,6 @@
         const inputElem = div.querySelector('input');
         inputElem.addEventListener('input', updateCustomAllocationCounter);
       });
-      // Append counter element
       const counterDiv = document.createElement('div');
       counterDiv.id = "customAllocationCounter";
       counterDiv.textContent = "Remaining to distribute: $0";
@@ -846,20 +892,7 @@
     }
 
     /**************************************************************
-     * Helper: Determine if a given due date is within the period from 
-     * selectedDay to periodEnd (accounting for wrapping).
-     **************************************************************/
-    function isDueWithin(dueDate, selectedDay, periodEnd, daysInMonth) {
-      const effDue = effectiveDueDate(dueDate, daysInMonth);
-      if(periodEnd <= daysInMonth) {
-        return (effDue >= selectedDay && effDue <= periodEnd);
-      } else {
-        return (effDue >= selectedDay && effDue <= daysInMonth) || (effDue >= 1 && effDue <= periodEnd - daysInMonth);
-      }
-    }
-
-    /**************************************************************
-     * Helper: Get the most recent paycheck amount based on selectedDay.
+     * Helper: Get the most recent paycheck amount based on selected day.
      **************************************************************/
     function getMostRecentPaycheck(selectedDay, daysInMonth) {
       let recent = null;
@@ -907,9 +940,9 @@
 
     /**************************************************************
      * Calculation and Totals:
-     * Handles both fast mode (tracking off) and detailed mode (tracking on).
-     * Now the pay period range reflects the full period (including both start and end days)
-     * and the Monthly Expense Totals section includes per-bank combined totals.
+     * - The pay period range now displays the full period (from the last payday to the next).
+     * - In Required Balances Summary, if tracking is enabled and an account has surplus funds,
+     *   the surplus and extra daily discretionary spending (over the remaining days) is displayed.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -926,16 +959,23 @@
         return;
       }
 
+      // Determine the start of the pay period (most recent payday day)
+      const periodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
+      // Compute next payday difference from the cycle date
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
-      // Compute full period length (including both start and end day)
-      let periodLength = (periodEnd <= currentDaysInMonth) ? (periodEnd - selectedDay + 1) : ((currentDaysInMonth - selectedDay + 1) + (periodEnd - currentDaysInMonth));
+      // Full period length: from periodStart to periodEnd (wrap if needed)
+      let fullPeriodLength = (periodEnd >= periodStart) ? (periodEnd - periodStart + 1) : ((currentDaysInMonth - periodStart + 1) + periodEnd);
+      // Remaining days from cycle date to period end
+      let remainingDays = (periodEnd >= selectedDay) ? (periodEnd - selectedDay + 1) : ((currentDaysInMonth - selectedDay + 1) + periodEnd);
+
       const periodEndDisplay = (periodEnd <= currentDaysInMonth) ? periodEnd : (periodEnd - currentDaysInMonth) + " [next cycle]";
-      document.getElementById('payPeriodRange').textContent = `(from Day ${selectedDay} to Day ${periodEndDisplay} - Total: ${periodLength} days)`;
+      // Display full pay period range (using periodStart, not the cycle date)
+      document.getElementById('payPeriodRange').textContent = `(from Day ${periodStart} to Day ${periodEndDisplay} - Total: ${fullPeriodLength} days)`;
 
       let paycheck = getMostRecentPaycheck(selectedDay, currentDaysInMonth);
 
-      // If custom allocation is selected, ensure allocations sum to paycheck.
+      // For custom allocation, ensure allocations sum to paycheck.
       if(balanceTrackingEnabled && document.getElementById('distributionMethod').value === "custom") {
         let totalAllocated = 0;
         bankAccounts.forEach(account => {
@@ -950,7 +990,7 @@
         }
       }
 
-      // Pre-calculate required expenses for each account (for proportional allocation)
+      // Pre-calculate required expenses per account (for proportional allocation)
       let requiredExpenses = {};
       if(balanceTrackingEnabled) {
         bankAccounts.forEach(account => {
@@ -981,7 +1021,7 @@
         });
       }
 
-      // Calculate and display Required Balances per account.
+      // Build the Required Balances Summary.
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
       let overallCombined = 0;
@@ -1032,7 +1072,7 @@
         const totalRequired = totalBills + totalPeriodic;
         overallCombined += totalRequired;
         const leftover = availableFunds - totalRequired;
-        const dailySpending = leftover > 0 ? (leftover / periodLength).toFixed(2) : 0;
+        const dailyExtra = leftover > 0 ? (leftover / remainingDays).toFixed(2) : 0;
 
         const accountDiv = document.createElement('div');
         accountDiv.classList.add('account-summary');
@@ -1043,9 +1083,19 @@
           const availPara = document.createElement('p');
           availPara.textContent = `Available Funds (Starting Balance + Allocation): $${availableFunds.toFixed(2)}`;
           accountDiv.appendChild(availPara);
+          if(leftover > 0) {
+            const surplusPara = document.createElement('p');
+            surplusPara.style.color = 'green';
+            surplusPara.textContent = `Surplus: $${leftover.toFixed(2)} extra funds available.`;
+            accountDiv.appendChild(surplusPara);
+            const dailyPara = document.createElement('p');
+            dailyPara.style.color = 'green';
+            dailyPara.textContent = `Extra daily discretionary spending: $${dailyExtra} per day (over ${remainingDays} days remaining).`;
+            accountDiv.appendChild(dailyPara);
+          }
         }
         const requiredPara = document.createElement('p');
-        requiredPara.textContent = `Total Required (from Day ${selectedDay} to Day ${periodEndDisplay}): $${totalRequired.toFixed(2)}`;
+        requiredPara.textContent = `Total Required (from Day ${periodStart} to Day ${periodEndDisplay}): $${totalRequired.toFixed(2)}`;
         accountDiv.appendChild(requiredPara);
         if(balanceTrackingEnabled && availableFunds < totalRequired) {
           const alertPara = document.createElement('p');
