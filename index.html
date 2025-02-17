@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enhanced Cash Flow Manager</title>
+  <style>
+    /* Overall page styling */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    section {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    form input, form select, form button {
+      margin: 8px 0;
+      padding: 10px;
+      width: 100%;
+      max-width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    form button {
+      background-color: #2980b9;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    form button:hover {
+      background-color: #1c5980;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      background: #ecf0f1;
+      margin: 6px 0;
+      padding: 10px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .item-text {
+      flex: 1;
+      margin-right: 10px;
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+      border: none;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #c0392b;
+    }
+    .account-summary {
+      border: 1px solid #bdc3c7;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 6px;
+      background: #fdfdfd;
+    }
+    .result-header {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+    table {
+      width: auto;
+      margin-bottom: 10px;
+    }
+    table, th, td {
+      border: 1px solid #666;
+      border-collapse: collapse;
+      padding: 5px;
+    }
+    /* Expense Totals Section styling */
+    #expense-totals {
+      border: 2px solid #2980b9;
+      padding: 15px;
+      border-radius: 8px;
+      background: #eaf2f8;
+    }
+    #expense-totals h2 {
+      margin-top: 0;
+    }
+    #expense-totals h3 {
+      margin-bottom: 5px;
+    }
+    #expense-totals p {
+      font-size: 0.95em;
+      color: #555;
+    }
+    .totals-list {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Enhanced Cash Flow Manager</h1>
+  
+  <!-- Paydays Section -->
+  <section id="paydays">
+    <h2>Paydays</h2>
+    <form id="paydayForm">
+      <label for="paydayType">Payday Type:</label>
+      <select id="paydayType" required>
+        <option value="">Select Type</option>
+        <option value="specific">Specific Day</option>
+        <option value="1st15">1st and 15th</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+      <!-- For "specific" type, the user enters a day-of-month -->
+      <div id="specificDayInput" class="hidden">
+        <label for="specificDay">Day of Month (1–31):</label>
+        <input type="number" id="specificDay" placeholder="e.g., 15" min="1" max="31">
+      </div>
+      <!-- Expected paycheck amount (after-tax) for this payday -->
+      <label for="paycheckAmount">Expected Paycheck Amount (after-tax):</label>
+      <input type="number" id="paycheckAmount" placeholder="e.g., 2000" step="0.01" required>
+      <button type="submit">Add Payday</button>
+    </form>
+    <ul id="paydayList"></ul>
+  </section>
+  
+  <!-- Bank Accounts Section -->
+  <section id="bank-accounts">
+    <h2>Bank Accounts</h2>
+    <form id="bankAccountForm">
+      <input type="text" id="bankName" placeholder="Bank Account Name" required>
+      <input type="number" id="bankBalance" placeholder="Initial Balance (optional)" step="0.01">
+      <button type="submit">Add Bank Account</button>
+    </form>
+    <ul id="bankAccountList"></ul>
+  </section>
+  
+  <!-- Recurring Bills Section -->
+  <section id="recurring-bills">
+    <h2>Recurring Bills</h2>
+    <form id="billForm">
+      <input type="text" id="billName" placeholder="Bill Name (e.g., Rent)" required>
+      <input type="number" id="billAmount" placeholder="Bill Amount" required step="0.01">
+      <input type="number" id="billDueDate" placeholder="Due Date (Day 1–31)" required min="1" max="31">
+      <select id="billBankAccount" required>
+        <option value="">Select Bank Account</option>
+      </select>
+      <button type="submit">Add Recurring Bill</button>
+    </form>
+    <ul id="billList"></ul>
+  </section>
+  
+  <!-- CSV Import Section for Recurring Bills -->
+  <section id="csv-import">
+    <h2>CSV Import for Recurring Bills</h2>
+    <p>
+      You can import recurring bills from a CSV file. The CSV must have exactly these columns:
+      <code>Bill Name, Bill Amount, Due Date, Bank Account</code>.<br>
+      <strong>Important:</strong> The bank names in your CSV must match those in your Bank Accounts section.
+      Any bank listed in the CSV that is not already in the manual Bank Accounts section will be automatically added.
+    </p>
+    <p>Sample table:</p>
+    <table>
+      <tr>
+        <th>Bill Name</th>
+        <th>Bill Amount</th>
+        <th>Due Date</th>
+        <th>Bank Account</th>
+      </tr>
+      <tr>
+        <td>Rent</td>
+        <td>1200</td>
+        <td>1</td>
+        <td>Main Checking</td>
+      </tr>
+      <tr>
+        <td>Electricity</td>
+        <td>100</td>
+        <td>15</td>
+        <td>Main Checking</td>
+      </tr>
+    </table>
+    <br>
+    <label for="recurringCSV">Upload Recurring Bills CSV:</label>
+    <input type="file" id="recurringCSV" accept=".csv">
+  </section>
+  
+  <!-- Periodic Expenses Section -->
+  <section id="oneTime-expenses">
+    <h2>Periodic Expenses</h2>
+    <p>
+      Periodic Expenses are costs that do not occur every month but need to be planned for on a regular basis.
+      For example, car insurance that is due twice a year or a gym membership that is only due in certain months.
+    </p>
+    <form id="expenseForm">
+      <input type="text" id="expenseName" placeholder="Expense Name (e.g., Car Insurance)" required>
+      <input type="number" id="expenseAmount" placeholder="Expense Amount" required step="0.01">
+      <input type="number" id="expenseDueDate" placeholder="Due Day (1–31)" required min="1" max="31">
+      <select id="expenseBankAccount" required>
+        <option value="">Select Bank Account</option>
+      </select>
+      <h3>Expense Plan Type</h3>
+      <div>
+        <label>
+          <input type="radio" name="expensePlanType" value="occurrence" checked>
+          Occurrences Per Year
+        </label>
+        <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
+          Use this option if the expense occurs a fixed number of times per year.
+          For example, if your car insurance is due twice a year, set Occurrences Per Year to 2.
+        </p>
+      </div>
+      <div>
+        <label>
+          <input type="radio" name="expensePlanType" value="specific">
+          Specific Months
+        </label>
+        <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
+          Use this option if you know the exact months when the expense is due.
+          For example, if your gym membership is due in January and July, add 1 and 7 respectively.
+        </p>
+      </div>
+      <!-- Occurrence section -->
+      <div id="occurrenceSection">
+        <input type="number" id="expenseOccurrences" placeholder="Occurrences Per Year (e.g., 2)" min="0">
+      </div>
+      <!-- Specific Months section (initially hidden) -->
+      <div id="specificMonthsSection" class="hidden">
+        <label for="expenseMonthSelect">Select Month:</label>
+        <select id="expenseMonthSelect">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <button type="button" id="addExpenseMonthBtn">Add Month</button>
+        <ul id="expenseMonthsList"></ul>
+      </div>
+      <button type="submit">Add Periodic Expense</button>
+    </form>
+    <ul id="expenseList"></ul>
+  </section>
+  
+  <!-- Calculate Required Balances Section -->
+  <section id="calculation">
+    <h2>Calculate Required Balances</h2>
+    <label for="cycleDate">Select Cycle Date:</label>
+    <input type="date" id="cycleDate" required>
+    <button id="calculateButton">Calculate</button>
+  </section>
+  
+  <!-- Required Balances Summary Section -->
+  <section id="output">
+    <h2>Required Balances Summary</h2>
+    <div id="results"></div>
+  </section>
+  
+  <!-- Expense Totals Section (Moved to bottom) -->
+  <section id="expense-totals">
+    <h2>Expense Totals</h2>
+    <div id="payPeriodTotals">
+      <h3>Pay-Period Expense Totals</h3>
+      <p>This section shows the total expenses for the current pay period (from the selected cycle date until the next payday) along with a breakdown by bank account.</p>
+      <div id="payPeriodCombined"></div>
+      <div id="payPeriodByBank"></div>
+    </div>
+    <div id="monthlyTotals">
+      <h3>Monthly Expense Totals</h3>
+      <p>This section shows the total expenses for the entire month along with a breakdown by bank account.</p>
+      <div id="monthlyCombined"></div>
+      <div id="monthlyByBank"></div>
+    </div>
+  </section>
+  
+  <script>
+    /**************************************************************
+     * Data storage arrays for bank accounts, recurring bills,
+     * periodic expenses, and paydays.
+     **************************************************************/
+    let bankAccounts = [];
+    let recurringBills = [];
+    let oneTimeExpenses = []; // periodic expenses
+    let paydays = []; // Each payday: { id, type, day (if applicable), paycheckAmount }
+    
+    // Temporary storage for specific months in periodic expense entry
+    let tempExpenseMonths = [];
+    
+    /**************************************************************
+     * Helper: Get days in month based on the selected cycle date.
+     * If no cycle date is selected, default to 31.
+     **************************************************************/
+    function getCycleDaysInMonth() {
+      const cycleDateVal = document.getElementById('cycleDate').value;
+      if (cycleDateVal) {
+        let dt = new Date(cycleDateVal);
+        return new Date(dt.getFullYear(), dt.getMonth()+1, 0).getDate();
+      }
+      return 31;
+    }
+    
+    /**************************************************************
+     * Utility: Update bank account dropdowns in bills and expenses.
+     **************************************************************/
+    function updateBankAccountDropdowns() {
+      const billSelect = document.getElementById('billBankAccount');
+      const expenseSelect = document.getElementById('expenseBankAccount');
+      
+      billSelect.innerHTML = '<option value="">Select Bank Account</option>';
+      expenseSelect.innerHTML = '<option value="">Select Bank Account</option>';
+      
+      bankAccounts.forEach(account => {
+        const option1 = document.createElement('option');
+        option1.value = account.id;
+        option1.textContent = account.name;
+        billSelect.appendChild(option1);
+        
+        const option2 = document.createElement('option');
+        option2.value = account.id;
+        option2.textContent = account.name;
+        expenseSelect.appendChild(option2);
+      });
+    }
+    
+    /**************************************************************
+     * Show/hide the specific day input for paydays based on selection.
+     **************************************************************/
+    document.getElementById('paydayType').addEventListener('change', function() {
+      const specificInput = document.getElementById('specificDayInput');
+      if (this.value === 'specific') {
+        specificInput.classList.remove('hidden');
+      } else {
+        specificInput.classList.add('hidden');
+      }
+    });
+    
+    /**************************************************************
+     * Add a new Payday.
+     **************************************************************/
+    document.getElementById('paydayForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const type = document.getElementById('paydayType').value;
+      let day = null;
+      if (!type) {
+        alert("Please select a payday type.");
+        return;
+      }
+      if (type === 'specific') {
+        day = parseInt(document.getElementById('specificDay').value);
+        if (isNaN(day) || day < 1 || day > 31) {
+          alert("Enter a valid day of month (1–31).");
+          return;
+        }
+      }
+      const paycheckAmount = parseFloat(document.getElementById('paycheckAmount').value);
+      if (isNaN(paycheckAmount) || paycheckAmount <= 0) {
+        alert("Enter a valid expected paycheck amount.");
+        return;
+      }
+      const id = Date.now().toString() + "_pd";
+      paydays.push({ id, type, day, paycheckAmount });
+      updatePaydayList();
+      
+      document.getElementById('paydayType').value = "";
+      document.getElementById('specificDay').value = "";
+      document.getElementById('paycheckAmount').value = "";
+      document.getElementById('specificDayInput').classList.add('hidden');
+    });
+    
+    /**************************************************************
+     * Update the Payday list UI.
+     **************************************************************/
+    function updatePaydayList() {
+      const paydayList = document.getElementById('paydayList');
+      paydayList.innerHTML = "";
+      paydays.forEach(pd => {
+        let pdText = "";
+        if (pd.type === 'specific') {
+          pdText = "Day " + pd.day;
+        } else if (pd.type === '1st15') {
+          pdText = "1st and 15th";
+        } else {
+          pdText = pd.type.charAt(0).toUpperCase() + pd.type.slice(1);
+        }
+        pdText += " – Paycheck: $" + pd.paycheckAmount.toFixed(2);
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="item-text">${pdText}</span>`;
+        const delBtn = document.createElement('button');
+        delBtn.textContent = "Delete";
+        delBtn.classList.add('delete-btn');
+        delBtn.addEventListener('click', function() {
+          paydays = paydays.filter(item => item.id !== pd.id);
+          updatePaydayList();
+        });
+        li.appendChild(delBtn);
+        paydayList.appendChild(li);
+      });
+    }
+    
+    /**************************************************************
+     * Bank Account: Add a new bank account.
+     **************************************************************/
+    document.getElementById('bankAccountForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('bankName').value;
+      const balanceInput = document.getElementById('bankBalance').value;
+      const balance = balanceInput ? parseFloat(balanceInput) : null;
+      const id = Date.now().toString() + "_bank";
+      bankAccounts.push({ id, name, balance });
+      updateBankAccountList();
+      updateBankAccountDropdowns();
+      document.getElementById('bankName').value = '';
+      document.getElementById('bankBalance').value = '';
+    });
+    
+    /**************************************************************
+     * Update Bank Accounts list UI.
+     **************************************************************/
+    function updateBankAccountList() {
+      const bankList = document.getElementById('bankAccountList');
+      bankList.innerHTML = "";
+      bankAccounts.forEach(acc => {
+        const balText = (acc.balance !== null && !isNaN(acc.balance)) ? `$${acc.balance.toFixed(2)}` : "N/A (Will use paycheck amount)";
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="item-text">${acc.name} - Balance: ${balText}</span>`;
+        const delBtn = document.createElement('button');
+        delBtn.textContent = "Delete";
+        delBtn.classList.add('delete-btn');
+        delBtn.addEventListener('click', function() {
+          bankAccounts = bankAccounts.filter(item => item.id !== acc.id);
+          recurringBills = recurringBills.filter(bill => bill.bankAccountId !== acc.id);
+          oneTimeExpenses = oneTimeExpenses.filter(exp => exp.bankAccountId !== acc.id);
+          updateBankAccountList();
+          updateBankAccountDropdowns();
+          updateBillList();
+          updateExpenseList();
+        });
+        li.appendChild(delBtn);
+        bankList.appendChild(li);
+      });
+    }
+    
+    /**************************************************************
+     * Recurring Bill: Add a new recurring bill.
+     **************************************************************/
+    document.getElementById('billForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('billName').value;
+      const amount = parseFloat(document.getElementById('billAmount').value);
+      let dueDate = parseInt(document.getElementById('billDueDate').value);
+      const bankAccountId = document.getElementById('billBankAccount').value;
+      if (!bankAccountId) {
+        alert("Please select a bank account for the bill.");
+        return;
+      }
+      const id = Date.now().toString() + "_bill";
+      recurringBills.push({ id, name, amount, dueDate, bankAccountId });
+      updateBillList();
+      document.getElementById('billName').value = '';
+      document.getElementById('billAmount').value = '';
+      document.getElementById('billDueDate').value = '';
+      document.getElementById('billBankAccount').value = '';
+    });
+    
+    /**************************************************************
+     * Update Recurring Bills list UI.
+     **************************************************************/
+    function updateBillList() {
+      const billList = document.getElementById('billList');
+      billList.innerHTML = "";
+      const days = getCycleDaysInMonth();
+      recurringBills.forEach(bill => {
+        const bankAccount = bankAccounts.find(acc => acc.id === bill.bankAccountId);
+        const li = document.createElement('li');
+        li.classList.add("bill-item");
+        li.innerHTML = `<span class="item-text">${bill.name} - $${bill.amount.toFixed(2)} due on Day ${effectiveDueDate(bill.dueDate, days)} from ${bankAccount ? bankAccount.name : ""}</span>`;
+        const delBtn = document.createElement('button');
+        delBtn.textContent = "Delete";
+        delBtn.classList.add('delete-btn');
+        delBtn.addEventListener('click', function() {
+          recurringBills = recurringBills.filter(item => item.id !== bill.id);
+          updateBillList();
+        });
+        li.appendChild(delBtn);
+        billList.appendChild(li);
+      });
+    }
+    
+    /**************************************************************
+     * Expense Plan Type toggle: Show/hide Occurrence vs Specific Months.
+     **************************************************************/
+    const expensePlanTypeRadios = document.getElementsByName('expensePlanType');
+    expensePlanTypeRadios.forEach(radio => {
+      radio.addEventListener('change', function() {
+        if(this.value === 'occurrence') {
+          document.getElementById('occurrenceSection').classList.remove('hidden');
+          document.getElementById('specificMonthsSection').classList.add('hidden');
+        } else {
+          document.getElementById('occurrenceSection').classList.add('hidden');
+          document.getElementById('specificMonthsSection').classList.remove('hidden');
+        }
+      });
+    });
+    
+    /**************************************************************
+     * Specific Months: Add month selection for periodic expense.
+     **************************************************************/
+    document.getElementById('addExpenseMonthBtn').addEventListener('click', function() {
+      const monthSelect = document.getElementById('expenseMonthSelect');
+      const month = monthSelect.value;
+      if (!tempExpenseMonths.includes(month)) {
+        tempExpenseMonths.push(month);
+        updateExpenseMonthsList();
+      }
+    });
+    
+    function updateExpenseMonthsList() {
+      const list = document.getElementById('expenseMonthsList');
+      list.innerHTML = "";
+      tempExpenseMonths.forEach((m, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="item-text">${monthName(parseInt(m))}</span>`;
+        const delBtn = document.createElement('button');
+        delBtn.textContent = "Delete";
+        delBtn.classList.add('delete-btn');
+        delBtn.addEventListener('click', function() {
+          tempExpenseMonths.splice(index, 1);
+          updateExpenseMonthsList();
+        });
+        li.appendChild(delBtn);
+        list.appendChild(li);
+      });
+    }
+    
+    function monthName(m) {
+      const names = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      return names[m - 1] || "";
+    }
+    
+    /**************************************************************
+     * Periodic Expense: Add a new periodic expense.
+     **************************************************************/
+    document.getElementById('expenseForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('expenseName').value;
+      const amount = parseFloat(document.getElementById('expenseAmount').value);
+      let dueDate = parseInt(document.getElementById('expenseDueDate').value);
+      const bankAccountId = document.getElementById('expenseBankAccount').value;
+      if (!bankAccountId) {
+        alert("Please select a bank account for the expense.");
+        return;
+      }
+      let planType = document.querySelector('input[name="expensePlanType"]:checked').value;
+      let occurrences = 0;
+      let specificMonths = [];
+      if(planType === 'occurrence') {
+        occurrences = parseInt(document.getElementById('expenseOccurrences').value) || 0;
+      } else if(planType === 'specific') {
+        specificMonths = [...tempExpenseMonths];
+        tempExpenseMonths = [];
+        updateExpenseMonthsList();
+      }
+      const id = Date.now().toString() + "_expense";
+      oneTimeExpenses.push({ id, name, amount, dueDate, bankAccountId, planType, occurrences, specificMonths });
+      updateExpenseList();
+      document.getElementById('expenseName').value = '';
+      document.getElementById('expenseAmount').value = '';
+      document.getElementById('expenseDueDate').value = '';
+      document.getElementById('expenseBankAccount').value = '';
+      document.getElementById('expenseOccurrences').value = '';
+      document.querySelector('input[name="expensePlanType"][value="occurrence"]').checked = true;
+      document.getElementById('occurrenceSection').classList.remove('hidden');
+      document.getElementById('specificMonthsSection').classList.add('hidden');
+    });
+    
+    /**************************************************************
+     * Update Periodic Expenses list UI.
+     **************************************************************/
+    function updateExpenseList() {
+      const expenseList = document.getElementById('expenseList');
+      expenseList.innerHTML = "";
+      oneTimeExpenses.forEach(exp => {
+        const bankAccount = bankAccounts.find(acc => acc.id === exp.bankAccountId);
+        let expText = `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${exp.dueDate}`;
+        if(exp.planType === 'occurrence' && exp.occurrences > 0) {
+          expText += ` | Occurs ${exp.occurrences}x/yr`;
+        } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
+          expText += ` | Due in: ${exp.specificMonths.map(m => monthName(parseInt(m))).join(', ')}`;
+        } else {
+          expText += " (One-Time)";
+        }
+        const li = document.createElement('li');
+        li.classList.add("expense-item");
+        li.innerHTML = `<span class="item-text">${expText} from ${bankAccount ? bankAccount.name : ""}</span>`;
+        const delBtn = document.createElement('button');
+        delBtn.textContent = "Delete";
+        delBtn.classList.add('delete-btn');
+        delBtn.addEventListener('click', function() {
+          oneTimeExpenses = oneTimeExpenses.filter(item => item.id !== exp.id);
+          updateExpenseList();
+        });
+        li.appendChild(delBtn);
+        expenseList.appendChild(li);
+      });
+    }
+    
+    /**************************************************************
+     * Helper: For bills due on 29-31 in a month with fewer days,
+     * return the effective due date.
+     **************************************************************/
+    function effectiveDueDate(dueDate, daysInMonth) {
+      return (dueDate > daysInMonth) ? daysInMonth : dueDate;
+    }
+    
+    /**************************************************************
+     * Helper: Compute expected pay periods per year based on paydays.
+     **************************************************************/
+    function getExpectedPayPeriodsPerYear() {
+      let periods = 12; // default monthly
+      if (paydays.some(pd => pd.type === 'daily')) {
+         periods = 365;
+      } else if (paydays.some(pd => pd.type === 'weekly')) {
+         periods = 52;
+      } else if (paydays.some(pd => pd.type === '1st15')) {
+         periods = 24;
+      }
+      return periods;
+    }
+    
+    /**************************************************************
+     * Helper: Compute next payday difference (in days) from the selected day.
+     **************************************************************/
+    function computeNextPaydayDiff(selectedDay, daysInMonth) {
+      let differences = [];
+      paydays.forEach(pd => {
+        let diff = 0;
+        if(pd.type === 'specific'){
+          let pdDay = effectiveDueDate(pd.day, daysInMonth);
+          if(pdDay >= selectedDay) {
+            diff = pdDay - selectedDay;
+          } else {
+            diff = (daysInMonth - selectedDay) + pdDay;
+          }
+        } else if(pd.type === '1st15'){
+          if(selectedDay < 15) {
+            diff = 15 - selectedDay;
+          } else {
+            diff = (daysInMonth - selectedDay) + 1;
+          }
+        } else if(pd.type === 'daily'){
+          diff = 1;
+        } else if(pd.type === 'weekly'){
+          diff = 7;
+        } else if(pd.type === 'monthly'){
+          let pdDay = daysInMonth;
+          if(selectedDay <= pdDay) {
+            diff = pdDay - selectedDay;
+          } else {
+            diff = (daysInMonth - selectedDay) + pdDay;
+          }
+        }
+        differences.push(diff);
+      });
+      return Math.min(...differences);
+    }
+    
+    /**************************************************************
+     * Helper: Determine if a given due date is within the period from 
+     * selectedDay to periodEnd (accounting for wrapping).
+     **************************************************************/
+    function isDueWithin(dueDate, selectedDay, periodEnd, daysInMonth) {
+      const effDue = effectiveDueDate(dueDate, daysInMonth);
+      if(periodEnd <= daysInMonth) {
+        return (effDue >= selectedDay && effDue <= periodEnd);
+      } else {
+        return (effDue >= selectedDay && effDue <= daysInMonth) || (effDue >= 1 && effDue <= periodEnd - daysInMonth);
+      }
+    }
+    
+    /**************************************************************
+     * Helper: Get the most recent paycheck amount based on selectedDay.
+     **************************************************************/
+    function getMostRecentPaycheck(selectedDay, daysInMonth) {
+      let recent = null;
+      let recentEffectiveDay = -1;
+      paydays.forEach(pd => {
+        let effDay;
+        if(pd.type === 'specific'){
+          effDay = effectiveDueDate(pd.day, daysInMonth);
+        } else if(pd.type === '1st15'){
+          effDay = (selectedDay >= 15) ? 15 : 1;
+        } else if(pd.type === 'daily'){
+          effDay = selectedDay;
+        } else if(pd.type === 'weekly'){
+          effDay = (selectedDay > 7) ? (selectedDay - 7) : selectedDay;
+        } else if(pd.type === 'monthly'){
+          effDay = daysInMonth;
+        }
+        if(effDay <= selectedDay && effDay > recentEffectiveDay) {
+          recentEffectiveDay = effDay;
+          recent = pd;
+        }
+      });
+      if(!recent) {
+        paydays.forEach(pd => {
+          let effDay;
+          if(pd.type === 'specific'){
+            effDay = effectiveDueDate(pd.day, daysInMonth);
+          } else if(pd.type === '1st15'){
+            effDay = 15;
+          } else if(pd.type === 'daily'){
+            effDay = selectedDay;
+          } else if(pd.type === 'weekly'){
+            effDay = selectedDay;
+          } else if(pd.type === 'monthly'){
+            effDay = daysInMonth;
+          }
+          if(effDay > recentEffectiveDay) {
+            recentEffectiveDay = effDay;
+            recent = pd;
+          }
+        });
+      }
+      return recent ? recent.paycheckAmount : 0;
+    }
+    
+    /**************************************************************
+     * Calculation and Totals:
+     * Reads the selected cycle date, extracts the day and month details,
+     * and calculates:
+     *   - Required Balances (displayed in "Required Balances Summary")
+     *   - Expense Totals for the current pay period and for the entire month,
+     *     both overall and broken down by bank account (displayed in "Expense Totals")
+     * Also, for each bank account in the Required Balances Summary, it lists all
+     * scheduled recurring bills and periodic expenses.
+     **************************************************************/
+    document.getElementById('calculateButton').addEventListener('click', function() {
+      const cycleDateStr = document.getElementById('cycleDate').value;
+      if (!cycleDateStr) {
+        alert("Please select a cycle date.");
+        return;
+      }
+      const cycleDate = new Date(cycleDateStr);
+      const selectedDay = cycleDate.getDate();
+      const currentDaysInMonth = new Date(cycleDate.getFullYear(), cycleDate.getMonth()+1, 0).getDate();
+      
+      if (paydays.length === 0) {
+        alert("Please add at least one payday.");
+        return;
+      }
+      
+      const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
+      let periodEnd = selectedDay + nextDiff;
+      let daysRemaining = (periodEnd <= currentDaysInMonth) ? (periodEnd - selectedDay) : ((currentDaysInMonth - selectedDay) + (periodEnd - currentDaysInMonth));
+      if(daysRemaining === 0) daysRemaining = 1;
+      
+      // Calculate Required Balances
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = "";
+      let overallCombined = 0;
+      
+      bankAccounts.forEach(account => {
+        let availableFunds = (account.balance !== null && !isNaN(account.balance)) ? account.balance : getMostRecentPaycheck(selectedDay, currentDaysInMonth);
+        const billsForAccount = recurringBills.filter(bill => {
+          return bill.bankAccountId === account.id && isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
+        });
+        let totalPeriodic = 0;
+        oneTimeExpenses.forEach(exp => {
+          if(exp.bankAccountId === account.id) {
+            if(exp.planType === 'occurrence' && exp.occurrences > 0) {
+              totalPeriodic += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
+            } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
+              if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+                totalPeriodic += exp.amount;
+              }
+            } else {
+              // For any one-time expense not flagged by occurrence or specific
+              if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+                totalPeriodic += exp.amount;
+              }
+            }
+          }
+        });
+        let totalBills = 0;
+        billsForAccount.forEach(bill => {
+          totalBills += bill.amount;
+        });
+        const totalRequired = totalBills + totalPeriodic;
+        overallCombined += totalRequired;
+        const leftover = availableFunds - totalRequired;
+        const dailySpending = leftover > 0 ? (leftover / daysRemaining).toFixed(2) : 0;
+        
+        const accountDiv = document.createElement('div');
+        accountDiv.classList.add('account-summary');
+        const header = document.createElement('h3');
+        header.textContent = account.name;
+        accountDiv.appendChild(header);
+        const availPara = document.createElement('p');
+        availPara.textContent = `Available Funds: $${availableFunds.toFixed(2)}`;
+        accountDiv.appendChild(availPara);
+        const periodEndDisplay = (periodEnd <= currentDaysInMonth) ? periodEnd : (periodEnd - currentDaysInMonth) + " [next cycle]";
+        const requiredPara = document.createElement('p');
+        requiredPara.textContent = `Total Required (from Day ${selectedDay} to Day ${periodEndDisplay}): $${totalRequired.toFixed(2)}`;
+        accountDiv.appendChild(requiredPara);
+        if(leftover > 0) {
+          const dailyPara = document.createElement('p');
+          dailyPara.textContent = `Daily discretionary spending: $${dailySpending} per day (over ${daysRemaining} days)`;
+          accountDiv.appendChild(dailyPara);
+        }
+        if(availableFunds < totalRequired) {
+          const alertPara = document.createElement('p');
+          alertPara.style.color = 'red';
+          alertPara.textContent = "Insufficient funds! Consider transferring additional funds.";
+          accountDiv.appendChild(alertPara);
+        }
+        
+        // List each bill/expense scheduled for this account:
+        const listHeader = document.createElement('p');
+        listHeader.textContent = "Upcoming Bills/Expenses:";
+        accountDiv.appendChild(listHeader);
+        
+        const list = document.createElement('ul');
+        // Recurring Bills
+        billsForAccount.forEach(bill => {
+          const li = document.createElement('li');
+          li.textContent = `${bill.name} - $${bill.amount.toFixed(2)} due on Day ${effectiveDueDate(bill.dueDate, currentDaysInMonth)}`;
+          list.appendChild(li);
+        });
+        // Periodic Expenses (list all that are scheduled in this pay period)
+        oneTimeExpenses.forEach(exp => {
+          if(exp.bankAccountId === account.id && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+            let expText = "";
+            if(exp.planType === 'occurrence' && exp.occurrences > 0) {
+              expText = `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${effectiveDueDate(exp.dueDate, currentDaysInMonth)} (Occurs ${exp.occurrences}x/yr)`;
+            } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
+              expText = `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${effectiveDueDate(exp.dueDate, currentDaysInMonth)} (Due in: ${exp.specificMonths.map(m => monthName(parseInt(m))).join(', ')})`;
+            } else {
+              expText = `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${effectiveDueDate(exp.dueDate, currentDaysInMonth)} (One-Time)`;
+            }
+            const li = document.createElement('li');
+            li.textContent = expText;
+            list.appendChild(li);
+          }
+        });
+        accountDiv.appendChild(list);
+        resultsDiv.appendChild(accountDiv);
+      });
+      
+      // ---------------------------
+      // Expense Totals Calculations:
+      // ---------------------------
+      let payPeriodTotals = {};
+      let monthlyTotals = {};
+      
+      bankAccounts.forEach(acc => {
+        payPeriodTotals[acc.id] = 0;
+        monthlyTotals[acc.id] = 0;
+      });
+      
+      // Recurring bills:
+      recurringBills.forEach(bill => {
+        if(isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+          payPeriodTotals[bill.bankAccountId] += bill.amount;
+        }
+        monthlyTotals[bill.bankAccountId] += bill.amount;
+      });
+      
+      // Periodic expenses:
+      oneTimeExpenses.forEach(exp => {
+        if(exp.planType === 'occurrence' && exp.occurrences > 0) {
+          payPeriodTotals[exp.bankAccountId] += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
+          monthlyTotals[exp.bankAccountId] += (exp.amount * exp.occurrences) / 12;
+        } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
+          if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) && isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+            payPeriodTotals[exp.bankAccountId] += exp.amount;
+          }
+          if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString())) {
+            monthlyTotals[exp.bankAccountId] += exp.amount;
+          }
+        }
+      });
+      
+      let combinedPayPeriod = 0;
+      let combinedMonthly = 0;
+      for (let id in payPeriodTotals) {
+        combinedPayPeriod += payPeriodTotals[id];
+      }
+      for (let id in monthlyTotals) {
+        combinedMonthly += monthlyTotals[id];
+      }
+      
+      document.getElementById('payPeriodCombined').innerHTML = `<strong>Combined Pay-Period Total:</strong> $${combinedPayPeriod.toFixed(2)}`;
+      let payPeriodBankList = "<ul class='totals-list'>";
+      bankAccounts.forEach(acc => {
+        payPeriodBankList += `<li>${acc.name}: $${payPeriodTotals[acc.id].toFixed(2)}</li>`;
+      });
+      payPeriodBankList += "</ul>";
+      document.getElementById('payPeriodByBank').innerHTML = payPeriodBankList;
+      
+      document.getElementById('monthlyCombined').innerHTML = `<strong>Combined Monthly Total:</strong> $${combinedMonthly.toFixed(2)}`;
+      let monthlyBankList = "<ul class='totals-list'>";
+      bankAccounts.forEach(acc => {
+        monthlyBankList += `<li>${acc.name}: $${monthlyTotals[acc.id].toFixed(2)}</li>`;
+      });
+      monthlyBankList += "</ul>";
+      document.getElementById('monthlyByBank').innerHTML = monthlyBankList;
+    });
+    
+    /**************************************************************
+     * CSV Import for Recurring Bills:
+     * Process and parse the CSV file uploaded via the #recurringCSV input.
+     * The CSV must have four columns: Bill Name, Bill Amount, Due Date, and Bank Account.
+     **************************************************************/
+    document.getElementById('recurringCSV').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      // File Validation: ensure .csv format
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        alert("Please upload a file in .csv format.");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const csvData = evt.target.result;
+          const lines = csvData.split(/\r\n|\n/).filter(line => line.trim() !== '');
+          if (lines.length < 2) {
+            alert("CSV file does not contain any data rows.");
+            return;
+          }
+          const headers = lines[0].split(',').map(h => h.trim());
+          const requiredHeaders = ["Bill Name", "Bill Amount", "Due Date", "Bank Account"];
+          for (let header of requiredHeaders) {
+            if (!headers.includes(header)) {
+              alert("Recurring Bills CSV is missing required column: " + header);
+              return;
+            }
+          }
+          const data = [];
+          const errors = [];
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.trim() === "") continue;
+            const fields = line.split(',');
+            const rowObj = {};
+            headers.forEach((header, index) => {
+              rowObj[header] = fields[index] ? fields[index].trim() : "";
+            });
+            if (!rowObj["Bill Name"] || !rowObj["Bill Amount"] || !rowObj["Due Date"] || !rowObj["Bank Account"]) {
+              errors.push(`Row ${i+1}: Missing required data.`);
+              continue;
+            }
+            const amount = parseFloat(rowObj["Bill Amount"]);
+            if (isNaN(amount) || amount <= 0) {
+              errors.push(`Row ${i+1}: Bill Amount must be a positive number.`);
+              continue;
+            }
+            const dueDate = parseInt(rowObj["Due Date"]);
+            if (isNaN(dueDate) || dueDate < 1 || dueDate > 31) {
+              errors.push(`Row ${i+1}: Due Date must be between 1 and 31.`);
+              continue;
+            }
+            // Check if bank account exists (case-insensitive). If not, add it.
+            let bankAcc = bankAccounts.find(acc => acc.name.toLowerCase() === rowObj["Bank Account"].toLowerCase());
+            if (!bankAcc) {
+              const bankId = Date.now().toString() + "_bank_csv_" + i;
+              const newBank = { id: bankId, name: rowObj["Bank Account"], balance: null };
+              bankAccounts.push(newBank);
+              updateBankAccountList();
+              updateBankAccountDropdowns();
+              bankAcc = newBank;
+            }
+            data.push({
+              id: Date.now().toString() + "_bill" + i,
+              name: rowObj["Bill Name"],
+              amount: amount,
+              dueDate: dueDate,
+              bankAccountId: bankAcc.id
+            });
+          }
+          
+          if (errors.length > 0) {
+            alert("Errors found while parsing CSV:\n" + errors.join("\n"));
+            return;
+          }
+          
+          data.forEach(bill => recurringBills.push(bill));
+          updateBillList();
+          alert("Recurring bills imported successfully.");
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred while processing the CSV file: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
