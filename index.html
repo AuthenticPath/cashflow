@@ -62,7 +62,7 @@
       flex: 1;
       margin-right: 10px;
     }
-    .delete-btn, .edit-btn {
+    .delete-btn {
       background-color: #e74c3c;
       border: none;
       color: #fff;
@@ -70,8 +70,20 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    .delete-btn:hover, .edit-btn:hover {
+    .delete-btn:hover {
       background-color: #c0392b;
+    }
+    .edit-btn {
+      background-color: #27ae60;
+      border: none;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    .edit-btn:hover {
+      background-color: #1e8449;
     }
     .account-summary {
       border: 1px solid #bdc3c7;
@@ -327,7 +339,7 @@
     <h2>Expense Totals</h2>
     <div id="payPeriodTotals">
       <h3>Pay-Period Expense Totals</h3>
-      <p id="payPeriodRange">(from Day ? to Day ?)</p>
+      <p id="payPeriodRange">(from Day ? to Day ? - Total: ? days)</p>
       <div id="payPeriodCombined"></div>
       <div id="payPeriodByBank"></div>
     </div>
@@ -426,7 +438,6 @@
     }
 
     function updateCustomAllocationCounter() {
-      // Use first payday's amount as target for custom allocation if available
       let target = paydays.length > 0 ? paydays[0].paycheckAmount : 0;
       let sum = 0;
       bankAccounts.forEach(account => {
@@ -459,7 +470,6 @@
      **************************************************************/
     document.getElementById('balanceTrackingToggle').addEventListener('change', function() {
       balanceTrackingEnabled = this.checked;
-      // Show or hide distribution section
       const distributionSection = document.getElementById('distribution-section');
       if(balanceTrackingEnabled) {
         distributionSection.classList.remove('hidden');
@@ -571,7 +581,7 @@
 
     /**************************************************************
      * Update Bank Accounts list UI.
-     * Adds an Edit button if balance tracking is enabled.
+     * Adds a green "Edit" button if balance tracking is enabled.
      **************************************************************/
     function updateBankAccountList() {
       const bankList = document.getElementById('bankAccountList');
@@ -591,7 +601,7 @@
               updateBankAccountList();
             }
           });
-          li.appendChild(editBtn);
+          li.insertBefore(editBtn, li.firstChild);
         }
         const delBtn = document.createElement('button');
         delBtn.textContent = "Delete";
@@ -898,6 +908,8 @@
     /**************************************************************
      * Calculation and Totals:
      * Handles both fast mode (tracking off) and detailed mode (tracking on).
+     * Now the pay period range reflects the full period (including both start and end days)
+     * and the Monthly Expense Totals section includes per-bank combined totals.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -916,12 +928,10 @@
 
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
-      let daysRemaining = (periodEnd <= currentDaysInMonth) ? (periodEnd - selectedDay) : ((currentDaysInMonth - selectedDay) + (periodEnd - currentDaysInMonth));
-      if(daysRemaining === 0) daysRemaining = 1;
-
-      // Update pay period range text
+      // Compute full period length (including both start and end day)
+      let periodLength = (periodEnd <= currentDaysInMonth) ? (periodEnd - selectedDay + 1) : ((currentDaysInMonth - selectedDay + 1) + (periodEnd - currentDaysInMonth));
       const periodEndDisplay = (periodEnd <= currentDaysInMonth) ? periodEnd : (periodEnd - currentDaysInMonth) + " [next cycle]";
-      document.getElementById('payPeriodRange').textContent = `(from Day ${selectedDay} to Day ${periodEndDisplay})`;
+      document.getElementById('payPeriodRange').textContent = `(from Day ${selectedDay} to Day ${periodEndDisplay} - Total: ${periodLength} days)`;
 
       let paycheck = getMostRecentPaycheck(selectedDay, currentDaysInMonth);
 
@@ -996,7 +1006,6 @@
         }
         let availableFunds = balanceTrackingEnabled ? (startingBalance + allocated) : ((account.balance !== null && !isNaN(account.balance)) ? account.balance : 0);
 
-        // Calculate bills and periodic expenses for this account.
         const billsForAccount = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id && isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
         });
@@ -1023,7 +1032,7 @@
         const totalRequired = totalBills + totalPeriodic;
         overallCombined += totalRequired;
         const leftover = availableFunds - totalRequired;
-        const dailySpending = leftover > 0 ? (leftover / daysRemaining).toFixed(2) : 0;
+        const dailySpending = leftover > 0 ? (leftover / periodLength).toFixed(2) : 0;
 
         const accountDiv = document.createElement('div');
         accountDiv.classList.add('account-summary');
@@ -1117,13 +1126,11 @@
       document.getElementById('monthlyCombined').innerHTML = `<strong>Combined Monthly Total:</strong> $${combinedMonthly.toFixed(2)}`;
       let monthlyBankList = "";
       bankAccounts.forEach(acc => {
-        monthlyBankList += `<h4>${acc.name}</h4>`;
+        monthlyBankList += `<h4>${acc.name} - Total: $${monthlyTotals[acc.id].toFixed(2)}</h4>`;
         let billsList = "<ul>";
-        // List recurring bills for this bank
         recurringBills.filter(bill => bill.bankAccountId === acc.id).forEach(bill => {
           billsList += `<li>${bill.name} - $${bill.amount.toFixed(2)} due on Day ${bill.dueDate}</li>`;
         });
-        // List periodic expenses for this bank relevant for the month
         oneTimeExpenses.filter(exp => exp.bankAccountId === acc.id).forEach(exp => {
           if(exp.planType === 'occurrence' && exp.occurrences > 0) {
             billsList += `<li>${exp.name} - $${exp.amount.toFixed(2)} (Occurs ${exp.occurrences}x/yr)</li>`;
@@ -1212,4 +1219,14 @@
           }
           data.forEach(bill => recurringBills.push(bill));
           updateBillList();
-   
+          alert("Recurring bills imported successfully.");
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred while processing the CSV file: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
