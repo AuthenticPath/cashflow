@@ -360,7 +360,6 @@
       <h3>Pay-Period Expense Totals</h3>
       <p id="payPeriodRange">This section displays the total expenses for the current pay period.</p>
       <div id="payPeriodCombined"></div>
-      <div id="payPeriodByBank"></div>
     </div>
     <div id="monthlyTotals">
       <h3>Monthly Expense Totals</h3>
@@ -485,6 +484,7 @@
         lockDiv.id = "lockedDistributionContainer";
         customAllocDiv.appendChild(lockDiv);
       }
+      customAllocDiv.classList.remove('hidden');
     }
 
     function updateCustomAllocationCounter() {
@@ -494,7 +494,7 @@
       let sum = 0;
       bankAccounts.forEach(account => {
         let input = document.getElementById('customAlloc_' + account.id);
-        if(input && input.value) {
+        if(input && input.value !== "") {
           sum += parseFloat(input.value);
         }
       });
@@ -516,7 +516,7 @@
       let allocations = {};
       bankAccounts.forEach(account => {
         let input = document.getElementById('customAlloc_' + account.id);
-        let val = input && input.value ? parseFloat(input.value) : 0;
+        let val = (input && input.value !== "") ? parseFloat(input.value) : 0;
         allocations[account.id] = val;
         total += val;
       });
@@ -991,7 +991,7 @@
 
     /**************************************************************
      * Calculation and Totals:
-     * (Updated to compute estimated surpluses based on expected paycheck deposits)
+     * (Updated to compute surpluses correctly as per user feedback)
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -1032,7 +1032,7 @@
         return;
       }
 
-      // For each bank account, compute the allocated deposit (ignoring current balance)
+      // Compute required expenses for each bank account for the current pay period
       let requiredExpenses = {};
       bankAccounts.forEach(account => {
         const billsForAccount = recurringBills.filter(bill => {
@@ -1067,7 +1067,7 @@
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
 
-      // For pay-period calculations, we ignore current bank balances and use expected deposit amounts
+      // For each bank account, calculate values for the Required Balances Summary
       let overallAllocated = 0;
       bankAccounts.forEach(account => {
         let allocated = 0;
@@ -1077,9 +1077,7 @@
             allocated = paycheck / bankAccounts.length;
           } else if(method === "custom") {
             let input = document.getElementById('customAlloc_' + account.id);
-            allocated = (input && input.value)
-              ? parseFloat(input.value)
-              : (paycheck / bankAccounts.length);
+            allocated = (input && input.value !== "" ? parseFloat(input.value) : (paycheck / bankAccounts.length));
           } else if(method === "single") {
             let selectedAccountId = document.getElementById('singleAccountSelector').value;
             allocated = (account.id === selectedAccountId) ? paycheck : 0;
@@ -1092,18 +1090,34 @@
         }
         overallAllocated += allocated;
         const totalRequired = requiredExpenses[account.id] || 0;
-        const surplus = allocated - totalRequired;
+        // Use the CURRENT bank balance for surplus calculation (assumes user has been paid)
+        const currentBalance = (account.balance !== null && !isNaN(account.balance)) ? account.balance : 0;
+        const surplus = currentBalance - totalRequired;
+        const dailySpendBudget = remainingDays > 0 ? surplus / remainingDays : surplus;
 
+        // Build the Required Balances Summary in the specified order:
         const accountDiv = document.createElement('div');
         accountDiv.classList.add('account-summary');
         const header = document.createElement('h3');
         header.textContent = account.name;
         accountDiv.appendChild(header);
 
+        // a. Deposit for This Pay Period:
         const depositPara = document.createElement('p');
-        depositPara.textContent = `Expected Deposit for This Pay Period: $${allocated.toFixed(2)}`;
+        depositPara.textContent = `Deposit for This Pay Period: $${allocated.toFixed(2)}`;
         accountDiv.appendChild(depositPara);
 
+        // b. Current Balance for this Bank Account:
+        const currentBalancePara = document.createElement('p');
+        currentBalancePara.textContent = `Current Balance for this Bank Account: $${currentBalance.toFixed(2)}`;
+        accountDiv.appendChild(currentBalancePara);
+
+        // c. Remaining Expenses for This Pay Period for this account:
+        const requiredPara = document.createElement('p');
+        requiredPara.textContent = `Remaining Expenses for This Pay Period for this account: $${totalRequired.toFixed(2)}`;
+        accountDiv.appendChild(requiredPara);
+
+        // d. Estimated Surplus for This Pay Period:
         const surplusPara = document.createElement('p');
         if(surplus >= 0) {
           surplusPara.style.color = 'green';
@@ -1114,16 +1128,10 @@
         }
         accountDiv.appendChild(surplusPara);
 
-        const requiredPara = document.createElement('p');
-        requiredPara.textContent = `Total Expenses for This Pay Period for this account: $${totalRequired.toFixed(2)}`;
-        accountDiv.appendChild(requiredPara);
-
-        if(allocated < totalRequired) {
-          const alertPara = document.createElement('p');
-          alertPara.style.color = 'red';
-          alertPara.textContent = "Warning: This account’s expected deposit may not cover the expenses for this pay period.";
-          accountDiv.appendChild(alertPara);
-        }
+        // e. Daily Spend Budget for the Remainder of This Pay Period:
+        const dailyPara = document.createElement('p');
+        dailyPara.textContent = `Daily Spend Budget for the Remainder of This Pay Period (${remainingDays} days): $${dailySpendBudget.toFixed(2)}`;
+        accountDiv.appendChild(dailyPara);
 
         // List upcoming items for this account
         const listHeader = document.createElement('p');
@@ -1177,17 +1185,16 @@
         resultsDiv.appendChild(accountDiv);
       });
 
-      // Overall Pay-Period Estimated Surplus in the Expense Totals section
+      // Expense Totals: Pay-Period calculations
       let combinedPayPeriod = 0;
       bankAccounts.forEach(acc => {
-        // Use the same pay-period expenses computed earlier for each account.
-        // (We sum the pay-period expenses for all accounts.)
         combinedPayPeriod += requiredExpenses[acc.id] || 0;
       });
+      // Here, Estimated Surplus for this pay period = (Expected Income) - (Combined Expenses)
+      let overallSurplus = paycheck - combinedPayPeriod;
       document.getElementById('payPeriodCombined').innerHTML =
-        `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}`;
-      let overallSurplus = overallAllocated - combinedPayPeriod;
-      document.getElementById('payPeriodCombined').innerHTML += `<br><span style="color:${overallSurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Pay Period: $${overallSurplus.toFixed(2)}</span>`;
+        `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}<br>` +
+        `<span style="color:${overallSurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Pay Period: $${overallSurplus.toFixed(2)}</span>`;
 
       // Monthly Totals Calculations
       let monthlyTotals = {};
@@ -1210,9 +1217,6 @@
       for (let id in monthlyTotals) {
         combinedMonthly += monthlyTotals[id];
       }
-      document.getElementById('monthlyCombined').innerHTML =
-        `<strong>Combined Monthly Expenses:</strong> $${combinedMonthly.toFixed(2)}`;
-      
       // Compute expected monthly allocations based on distribution method
       let expectedPayPeriodsPerYear = getExpectedPayPeriodsPerYear();
       let monthlyPaycheck = paycheck * (expectedPayPeriodsPerYear / 12);
@@ -1225,7 +1229,7 @@
             monthlyAllocated = monthlyPaycheck / bankAccounts.length;
           } else if(method === "custom") {
             let input = document.getElementById('customAlloc_' + acc.id);
-            let perPay = (input && input.value) ? parseFloat(input.value) : (paycheck / bankAccounts.length);
+            let perPay = (input && input.value !== "" ? parseFloat(input.value) : (paycheck / bankAccounts.length));
             monthlyAllocated = perPay * (expectedPayPeriodsPerYear / 12);
           } else if(method === "single") {
             let selectedAccountId = document.getElementById('singleAccountSelector').value;
@@ -1259,6 +1263,11 @@
         billsList += "</ul>";
         monthlyBankList += billsList;
       });
+      // Display Combined Monthly Expenses and add Estimated Monthly Surplus
+      document.getElementById('monthlyCombined').innerHTML =
+        `<strong>Combined Monthly Expenses:</strong> $${combinedMonthly.toFixed(2)}`;
+      let monthlySurplus = monthlyPaycheck - combinedMonthly;
+      document.getElementById('monthlyCombined').innerHTML += `<br><span style="color:${monthlySurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Month: $${monthlySurplus.toFixed(2)}</span>`;
       document.getElementById('monthlyByBank').innerHTML = monthlyBankList;
     });
 
