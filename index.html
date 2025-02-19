@@ -169,6 +169,37 @@
       font-size: 0.9em;
       color: #555;
     }
+    /* New container for Expected Paycheck Amount */
+    .paycheck-amount-section {
+      border: 2px solid var(--primary-color);
+      background-color: #f7faff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .paycheck-amount-section h2 {
+      margin-bottom: 15px;
+    }
+    /* Expense Plan Type container */
+    .expense-plan-type {
+      border: 1px solid #ccc;
+      background-color: #f7faff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .expense-plan-type > div {
+      margin-bottom: 10px;
+    }
+    .expense-plan-type label {
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .expense-plan-type p {
+      margin-left: 20px;
+      font-size: 0.9em;
+      color: #555;
+    }
     #distribution-section {
       margin-top: 20px;
       padding: 20px;
@@ -305,8 +336,9 @@
       <ul id="bankAccountList"></ul>
       <!-- Dynamic section for balance tracking (appears only if tracking is enabled) -->
       <div id="balanceTrackingDynamic" class="hidden">
-        <div class="dynamic-input">
-          <label for="expectedPaycheck">Expected Paycheck Amount (after-tax):</label>
+        <!-- New Expected Paycheck Amount container -->
+        <div id="expectedPaycheckSection" class="paycheck-amount-section">
+          <h2>Expected Paycheck Amount (After-Tax)</h2>
           <input type="number" id="expectedPaycheck" placeholder="e.g., 2000" step="0.01">
         </div>
         <div id="distribution-section">
@@ -358,25 +390,28 @@
           <option value="">Select Bank Account</option>
         </select>
         <h3>Expense Plan Type</h3>
-        <div>
-          <label>
-            <input type="radio" name="expensePlanType" value="occurrence" checked>
-            Occurrences Per Year
-          </label>
-          <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
-            Use this option if the expense occurs a fixed number of times per year.
-            For example, if your car insurance is due twice a year, set Occurrences Per Year to 2.
-          </p>
-        </div>
-        <div>
-          <label>
-            <input type="radio" name="expensePlanType" value="specific">
-            Specific Months
-          </label>
-          <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
-            Use this option if you know the exact months when the expense is due.
-            For example, if your gym membership is due in January and July, add 1 and 7 respectively.
-          </p>
+        <!-- Wrapped radio buttons in a new container -->
+        <div class="expense-plan-type">
+          <div>
+            <label>
+              <input type="radio" name="expensePlanType" value="occurrence" checked>
+              Occurrences Per Year
+            </label>
+            <p>
+              Use this option if the expense occurs a fixed number of times per year.
+              For example, if your car insurance is due twice a year, set Occurrences Per Year to 2.
+            </p>
+          </div>
+          <div>
+            <label>
+              <input type="radio" name="expensePlanType" value="specific">
+              Specific Months
+            </label>
+            <p>
+              Use this option if you know the exact months when the expense is due.
+              For example, if your gym membership is due in January and July, add 1 and 7 respectively.
+            </p>
+          </div>
         </div>
         <div id="occurrenceSection">
           <input type="number" id="expenseOccurrences" placeholder="Occurrences Per Year (e.g., 2)" min="0">
@@ -1204,50 +1239,31 @@
         const listHeader = document.createElement('p');
         listHeader.textContent = "Upcoming Bills/Expenses:";
         accountDiv.appendChild(listHeader);
-        let upcomingItems = [];
-        upcomingItems = upcomingItems.concat(
-          recurringBills.filter(bill => bill.bankAccountId === account.id && isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth))
-            .map(bill => ({...bill, type: 'bill'}))
-        );
-        upcomingItems = upcomingItems.concat(
-          oneTimeExpenses.filter(exp => {
-            if(exp.bankAccountId !== account.id) return false;
-            if(exp.planType === 'occurrence' && exp.occurrences > 0) {
-              return isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth);
-            } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-              return exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
-                     isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth);
-            } else {
-              return isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth);
-            }
-          }).map(exp => ({...exp, type: 'expense'}))
-        );
-        upcomingItems.sort((a, b) => {
-          const aEff = effectiveDueDate(a.dueDate, currentDaysInMonth);
-          const bEff = effectiveDueDate(b.dueDate, currentDaysInMonth);
-          const aDue = aEff < selectedDay ? aEff + currentDaysInMonth : aEff;
-          const bDue = bEff < selectedDay ? bEff + currentDaysInMonth : bEff;
-          return aDue - bDue;
-        });
         const list = document.createElement('ul');
-        upcomingItems.forEach(item => {
-          const dueDay = effectiveDueDate(item.dueDate, currentDaysInMonth);
-          let itemText = "";
-          if(item.type === 'bill') {
-            itemText = `${item.name} - $${item.amount.toFixed(2)} (Bill) due on Day ${dueDay}`;
-          } else {
-            if(item.planType === 'occurrence' && item.occurrences > 0) {
-              itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, Occurs ${item.occurrences}x/yr) due on Day ${dueDay}`;
-            } else if(item.planType === 'specific' && item.specificMonths.length > 0) {
-              itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, Due in: ${item.specificMonths.map(m => monthName(parseInt(m))).join(', ')}) due on Day ${dueDay}`;
-            } else {
-              itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, One-Time) due on Day ${dueDay}`;
-            }
-          }
+        if(upcomingItemsForAccount(account.id, selectedDay, periodEnd, currentDaysInMonth).length === 0) {
           const li = document.createElement('li');
-          li.textContent = itemText;
+          li.textContent = "None";
           list.appendChild(li);
-        });
+        } else {
+          upcomingItemsForAccount(account.id, selectedDay, periodEnd, currentDaysInMonth).forEach(item => {
+            const dueDay = effectiveDueDate(item.dueDate, currentDaysInMonth);
+            let itemText = "";
+            if(item.type === 'bill') {
+              itemText = `${item.name} - $${item.amount.toFixed(2)} (Bill) due on Day ${dueDay}`;
+            } else {
+              if(item.planType === 'occurrence' && item.occurrences > 0) {
+                itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, Occurs ${item.occurrences}x/yr) due on Day ${dueDay}`;
+              } else if(item.planType === 'specific' && item.specificMonths.length > 0) {
+                itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, Due in: ${item.specificMonths.map(m => monthName(parseInt(m))).join(', ')}) due on Day ${dueDay}`;
+              } else {
+                itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, One-Time) due on Day ${dueDay}`;
+              }
+            }
+            const li = document.createElement('li');
+            li.textContent = itemText;
+            list.appendChild(li);
+          });
+        }
         accountDiv.appendChild(list);
         resultsDiv.appendChild(accountDiv);
       });
@@ -1337,6 +1353,36 @@
       document.getElementById('monthlyCombined').innerHTML += `<br><span style="color:${monthlySurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Month: $${monthlySurplus.toFixed(2)}</span>`;
       document.getElementById('monthlyByBank').innerHTML = monthlyBankList;
     });
+
+    // Helper function to get upcoming items for a given bank account
+    function upcomingItemsForAccount(accountId, selectedDay, periodEnd, daysInMonth) {
+      let items = [];
+      items = items.concat(
+        recurringBills.filter(bill => bill.bankAccountId === accountId && isDueWithin(effectiveDueDate(bill.dueDate, daysInMonth), selectedDay, periodEnd, daysInMonth))
+          .map(bill => ({...bill, type: 'bill'}))
+      );
+      items = items.concat(
+        oneTimeExpenses.filter(exp => {
+          if(exp.bankAccountId !== accountId) return false;
+          if(exp.planType === 'occurrence' && exp.occurrences > 0) {
+            return isDueWithin(exp.dueDate, selectedDay, periodEnd, daysInMonth);
+          } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
+            return exp.specificMonths.includes((new Date(document.getElementById('cycleDate').value).getMonth()+1).toString()) &&
+                   isDueWithin(exp.dueDate, selectedDay, periodEnd, daysInMonth);
+          } else {
+            return isDueWithin(exp.dueDate, selectedDay, periodEnd, daysInMonth);
+          }
+        }).map(exp => ({...exp, type: 'expense'}))
+      );
+      items.sort((a, b) => {
+        const aEff = effectiveDueDate(a.dueDate, daysInMonth);
+        const bEff = effectiveDueDate(b.dueDate, daysInMonth);
+        const aDue = aEff < selectedDay ? aEff + daysInMonth : aEff;
+        const bDue = bEff < selectedDay ? bEff + daysInMonth : bEff;
+        return aDue - bDue;
+      });
+      return items;
+    }
 
     /**************************************************************
      * CSV Import for Recurring Bills.
