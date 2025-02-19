@@ -245,11 +245,7 @@
           <option value="single">Single Account</option>
           <option value="proportional">Proportional to Expenses</option>
         </select>
-        <div id="customAllocationFields" class="hidden">
-          <div id="customAllocationCounter">Remaining to distribute: $0</div>
-          <button type="button" id="addDistributionBtn">Add Distribution</button>
-          <div id="lockedDistributionContainer"></div>
-        </div>
+        <div id="customAllocationFields" class="hidden"></div>
         <div id="singleAccountSelectorContainer" class="hidden">
           <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
           <select id="singleAccountSelector">
@@ -984,16 +980,75 @@
           }
         });
       }
+      // Return the last known paycheckAmount (if it existed in older code) or 0 by default
+      // (If you store paychecks differently, adapt accordingly.)
       return recent ? recent.paycheckAmount : 0;
     }
 
     /**************************************************************
+     * NEW FUNCTION:
+     * Returns the day of the most recent payday (needed by the calculation).
+     **************************************************************/
+    function getMostRecentPaydayDay(selectedDay, daysInMonth) {
+      let recentDay = -1;
+      let recentEffectiveDay = -1;
+
+      paydays.forEach(pd => {
+        let effDay;
+        if(pd.type === 'specific') {
+          effDay = effectiveDueDate(pd.day, daysInMonth);
+        } else if(pd.type === '1st15') {
+          // If we are on or after the 15th, the most recent was day 15; otherwise day 1
+          effDay = (selectedDay >= 15) ? 15 : 1;
+        } else if(pd.type === 'daily') {
+          // If daily, "today" is effectively always a payday
+          effDay = selectedDay;
+        } else if(pd.type === 'weekly') {
+          // Example logic: we treat the last payday as "selectedDay - (selectedDay mod 7)"
+          // to get the most recent Sunday (or whatever day your code expects).
+          // This is an approximation, adapt if your "weekly" logic is different.
+          const offset = (selectedDay - 1) % 7; 
+          effDay = selectedDay - offset;
+        } else if(pd.type === 'monthly') {
+          // For monthly, we assume day = last day of the month
+          effDay = daysInMonth;
+        }
+
+        // If this payday day is not after 'selectedDay', but is bigger than anything else we have,
+        // treat it as the "most recent" payday.
+        if(effDay <= selectedDay && effDay > recentEffectiveDay) {
+          recentEffectiveDay = effDay;
+          recentDay = effDay;
+        }
+      });
+
+      // If we never found a payday that is <= selectedDay,
+      // pick the largest effective day from all paydays as a fallback.
+      if(recentDay === -1) {
+        let fallbackDay = 1;
+        paydays.forEach(pd => {
+          let effDay;
+          if(pd.type === 'specific') {
+            effDay = effectiveDueDate(pd.day, daysInMonth);
+          } else if(pd.type === '1st15') {
+            // fallback: day 15
+            effDay = 15;
+          } else if(pd.type === 'daily') {
+            effDay = selectedDay;
+          } else if(pd.type === 'weekly') {
+            effDay = 1; 
+          } else if(pd.type === 'monthly') {
+            effDay = daysInMonth;
+          }
+          if(effDay > fallbackDay) fallbackDay = effDay;
+        });
+        recentDay = fallbackDay;
+      }
+      return recentDay;
+    }
+
+    /**************************************************************
      * Calculation and Totals:
-     * Updated to:
-     * - Use the cycle date as the lower bound.
-     * - Treat bills due on 29-31 as due on the last day of the month.
-     * - Display an explanatory sentence for the pay-period totals.
-     * - If balance tracking is enabled, use the expected paycheck from the dynamic input.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -1010,6 +1065,7 @@
         return;
       }
 
+      // THIS is where we needed getMostRecentPaydayDay:
       const periodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
