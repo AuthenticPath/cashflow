@@ -7,7 +7,7 @@
     /* Overall page styling */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
+      background: linear-gradient(135deg, #e2eafc, #fdfbfb);
       margin: 0;
       padding: 20px;
       color: #333;
@@ -24,7 +24,7 @@
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     form input, form select, form button {
       margin: 8px 0;
@@ -34,6 +34,11 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       box-sizing: border-box;
+      transition: border 0.2s;
+    }
+    form input:focus, form select:focus {
+      border-color: #2980b9;
+      outline: none;
     }
     form button {
       background-color: #2980b9;
@@ -125,7 +130,7 @@
       margin: 10px 0;
       padding-left: 20px;
     }
-    /* New styles for sections */
+    /* New styling for dynamic balance tracking section */
     #balanceTrackingToggleContainer {
       margin-bottom: 15px;
     }
@@ -133,45 +138,26 @@
       font-size: 0.9em;
       color: #555;
     }
-    #distribution-section {
-      margin-bottom: 20px;
+    /* New dynamic container (expected paycheck & distribution) as an indented subsection */
+    #balanceTrackingDynamic {
+      margin-top: 20px;
+      padding: 15px;
+      border-left: 4px solid #2980b9;
+      background-color: #f7f9fc;
     }
-    #customAllocationCounter {
-      margin-top: 10px;
-      font-weight: bold;
+    #balanceTrackingDynamic .dynamic-input {
+      margin-bottom: 15px;
     }
-    /* Locked Distribution List styling */
-    #lockedDistributionContainer {
-      margin-top: 10px;
-      border-top: 1px dashed #ccc;
-      padding-top: 10px;
-    }
-    .locked-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #dff0d8;
-      padding: 5px;
-      border-radius: 4px;
-      margin-bottom: 5px;
-    }
-    .locked-delete-btn {
-      background-color: #e74c3c;
-      border: none;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .locked-delete-btn:hover {
-      background-color: #c0392b;
+    /* Additional spacing for Bank Accounts section */
+    #bank-accounts {
+      position: relative;
     }
   </style>
 </head>
 <body>
   <h1>Enhanced Cash Flow Manager</h1>
 
-  <!-- Paydays Section -->
+  <!-- Paydays Section (for non‑tracking scenarios) -->
   <section id="paydays">
     <h2>Paydays</h2>
     <form id="paydayForm">
@@ -189,8 +175,7 @@
         <label for="specificDay">Day of Month (1–31):</label>
         <input type="number" id="specificDay" placeholder="e.g., 15" min="1" max="31">
       </div>
-      <label for="paycheckAmount">Expected Paycheck Amount (after-tax):</label>
-      <input type="number" id="paycheckAmount" placeholder="e.g., 2000" step="0.01" required>
+      <!-- NOTE: The Expected Paycheck Amount input has been moved -->
       <button type="submit">Add Payday</button>
     </form>
     <ul id="paydayList"></ul>
@@ -246,30 +231,32 @@
       <button type="submit">Add Bank Account</button>
     </form>
     <ul id="bankAccountList"></ul>
-  </section>
-
-  <!-- Paycheck Distribution Section (visible only if tracking is enabled) -->
-  <section id="distribution-section" class="hidden">
-    <h2>Paycheck Distribution Method</h2>
-    <select id="distributionMethod">
-      <option value="equal">Equal Split</option>
-      <option value="custom">Custom Allocation</option>
-      <option value="single">Single Account</option>
-      <option value="proportional">Proportional to Expenses</option>
-    </select>
-    <div id="customAllocationFields" class="hidden">
-      <!-- Custom allocation inputs will be generated here -->
-      <div id="customAllocationCounter">Remaining to distribute: $0</div>
-      <!-- New "Add Distribution" button -->
-      <button type="button" id="addDistributionBtn">Add Distribution</button>
-      <!-- Container to display locked custom distribution -->
-      <div id="lockedDistributionContainer"></div>
-    </div>
-    <div id="singleAccountSelectorContainer" class="hidden">
-      <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
-      <select id="singleAccountSelector">
-        <!-- Options will be populated with bank accounts -->
-      </select>
+    <!-- Dynamic section for balance tracking (appears only if tracking is enabled) -->
+    <div id="balanceTrackingDynamic" class="hidden">
+      <div class="dynamic-input">
+        <label for="expectedPaycheck">Expected Paycheck Amount (after-tax):</label>
+        <input type="number" id="expectedPaycheck" placeholder="e.g., 2000" step="0.01">
+      </div>
+      <div id="distribution-section">
+        <h2>Paycheck Distribution Method</h2>
+        <select id="distributionMethod">
+          <option value="equal">Equal Split</option>
+          <option value="custom">Custom Allocation</option>
+          <option value="single">Single Account</option>
+          <option value="proportional">Proportional to Expenses</option>
+        </select>
+        <div id="customAllocationFields" class="hidden">
+          <div id="customAllocationCounter">Remaining to distribute: $0</div>
+          <button type="button" id="addDistributionBtn">Add Distribution</button>
+          <div id="lockedDistributionContainer"></div>
+        </div>
+        <div id="singleAccountSelectorContainer" class="hidden">
+          <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
+          <select id="singleAccountSelector">
+            <!-- Options will be populated with bank accounts -->
+          </select>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -369,7 +356,7 @@
     <h2>Expense Totals</h2>
     <div id="payPeriodTotals">
       <h3>Pay-Period Expense Totals</h3>
-      <p id="payPeriodRange">(from Day ? to Day ? - Total: ? days)</p>
+      <p id="payPeriodRange">This section displays the total expenses for the current pay period.</p>
       <div id="payPeriodCombined"></div>
       <div id="payPeriodByBank"></div>
     </div>
@@ -411,66 +398,13 @@
      **************************************************************/
     function isDueWithin(dueDate, periodStart, periodEnd, daysInMonth) {
       if (periodStart <= periodEnd) {
-        // Simple range check
         return (dueDate >= periodStart && dueDate <= periodEnd);
       } else {
-        // Wrap-around scenario
         return (
           (dueDate >= periodStart && dueDate <= daysInMonth) ||
           (dueDate >= 1 && dueDate <= periodEnd)
         );
       }
-    }
-
-    /**************************************************************
-     * Helper: Get the most recent payday day (start of pay period)
-     * based on selected day. Fallback ensures a number is returned.
-     **************************************************************/
-    function getMostRecentPaydayDay(selectedDay, daysInMonth) {
-      let recentDay = null;
-      let recentEffective = -1;
-      paydays.forEach(pd => {
-        let effDay;
-        if(pd.type === 'specific'){
-          effDay = effectiveDueDate(pd.day, daysInMonth);
-        } else if(pd.type === '1st15'){
-          effDay = (selectedDay >= 15) ? 15 : 1;
-        } else if(pd.type === 'daily'){
-          effDay = selectedDay;
-        } else if(pd.type === 'weekly'){
-          effDay = (selectedDay > 7) ? (selectedDay - 7) : selectedDay;
-        } else if(pd.type === 'monthly'){
-          effDay = daysInMonth;
-        }
-        if(effDay <= selectedDay && effDay > recentEffective) {
-          recentEffective = effDay;
-          recentDay = effDay;
-        }
-      });
-      if(recentDay === null) {
-        paydays.forEach(pd => {
-          let effDay;
-          if(pd.type === 'specific'){
-            effDay = effectiveDueDate(pd.day, daysInMonth);
-          } else if(pd.type === '1st15'){
-            effDay = 15;
-          } else if(pd.type === 'daily'){
-            effDay = selectedDay;
-          } else if(pd.type === 'weekly'){
-            effDay = selectedDay;
-          } else if(pd.type === 'monthly'){
-            effDay = daysInMonth;
-          }
-          if(effDay > recentEffective) {
-            recentEffective = effDay;
-            recentDay = effDay;
-          }
-        });
-      }
-      if(recentDay === null) {
-         recentDay = 1;
-      }
-      return recentDay;
     }
 
     /**************************************************************
@@ -536,7 +470,6 @@
       counterDiv.id = "customAllocationCounter";
       counterDiv.textContent = "Remaining to distribute: $0";
       customAllocDiv.appendChild(counterDiv);
-      // Add the "Add Distribution" button if not already added.
       if(!document.getElementById('addDistributionBtn')) {
         const addBtn = document.createElement('button');
         addBtn.type = "button";
@@ -545,7 +478,6 @@
         addBtn.addEventListener('click', lockCustomDistribution);
         customAllocDiv.appendChild(addBtn);
       }
-      // Also add the container for locked distribution.
       if(!document.getElementById('lockedDistributionContainer')) {
         const lockDiv = document.createElement('div');
         lockDiv.id = "lockedDistributionContainer";
@@ -554,7 +486,9 @@
     }
 
     function updateCustomAllocationCounter() {
-      let target = paydays.length > 0 ? paydays[0].paycheckAmount : 0;
+      let target = balanceTrackingEnabled 
+                   ? parseFloat(document.getElementById('expectedPaycheck').value) 
+                   : (paydays.length > 0 ? paydays[0].paycheckAmount : 0);
       let sum = 0;
       bankAccounts.forEach(account => {
         let input = document.getElementById('customAlloc_' + account.id);
@@ -573,8 +507,9 @@
      * Lock (Add) the custom distribution.
      **************************************************************/
     function lockCustomDistribution() {
-      // Gather custom allocation amounts.
-      let target = paydays.length > 0 ? paydays[0].paycheckAmount : 0;
+      let target = balanceTrackingEnabled 
+                   ? parseFloat(document.getElementById('expectedPaycheck').value) 
+                   : (paydays.length > 0 ? paydays[0].paycheckAmount : 0);
       let total = 0;
       let allocations = {};
       bankAccounts.forEach(account => {
@@ -587,9 +522,7 @@
         alert("The total of custom allocations must equal the paycheck amount of $" + target.toFixed(2) + ". Current total: $" + total.toFixed(2));
         return;
       }
-      // Lock the distribution.
       lockedDistribution = allocations;
-      // Disable the custom allocation inputs.
       bankAccounts.forEach(account => {
         let input = document.getElementById('customAlloc_' + account.id);
         if(input) {
@@ -612,7 +545,6 @@
         delBtn.classList.add('locked-delete-btn');
         delBtn.textContent = "Delete";
         delBtn.addEventListener('click', function() {
-          // Remove locked allocation for this account and re-enable input.
           delete lockedDistribution[accId];
           let input = document.getElementById('customAlloc_' + accId);
           if(input) {
@@ -644,11 +576,11 @@
      **************************************************************/
     document.getElementById('balanceTrackingToggle').addEventListener('change', function() {
       balanceTrackingEnabled = this.checked;
-      const distributionSection = document.getElementById('distribution-section');
+      const dynamicContainer = document.getElementById('balanceTrackingDynamic');
       if(balanceTrackingEnabled) {
-        distributionSection.classList.remove('hidden');
+        dynamicContainer.classList.remove('hidden');
       } else {
-        distributionSection.classList.add('hidden');
+        dynamicContainer.classList.add('hidden');
       }
       updateBankAccountList();
     });
@@ -693,17 +625,12 @@
           return;
         }
       }
-      const paycheckAmount = parseFloat(document.getElementById('paycheckAmount').value);
-      if (isNaN(paycheckAmount) || paycheckAmount <= 0) {
-        alert("Enter a valid expected paycheck amount.");
-        return;
-      }
+      // Note: Expected Paycheck Amount is now entered in the dynamic section.
       const id = Date.now().toString() + "_pd";
-      paydays.push({ id, type, day, paycheckAmount });
+      paydays.push({ id, type, day });
       updatePaydayList();
       document.getElementById('paydayType').value = "";
       document.getElementById('specificDay').value = "";
-      document.getElementById('paycheckAmount').value = "";
       document.getElementById('specificDayInput').classList.add('hidden');
     });
 
@@ -722,7 +649,6 @@
         } else {
           pdText = pd.type.charAt(0).toUpperCase() + pd.type.slice(1);
         }
-        pdText += " – Paycheck: $" + pd.paycheckAmount.toFixed(2);
         const li = document.createElement('li');
         li.innerHTML = `<span class="item-text">${pdText}</span>`;
         const delBtn = document.createElement('button');
@@ -756,7 +682,6 @@
 
     /**************************************************************
      * Update Bank Accounts list UI.
-     * Adds a green "Edit" button if balance tracking is enabled.
      **************************************************************/
     function updateBankAccountList() {
       const bankList = document.getElementById('bankAccountList');
@@ -821,12 +746,10 @@
 
     /**************************************************************
      * Update Recurring Bills list UI.
-     * Bills are displayed in chronological order by due date.
      **************************************************************/
     function updateBillList() {
       const billList = document.getElementById('billList');
       billList.innerHTML = "";
-      // Sort bills by due date
       recurringBills.sort((a, b) => a.dueDate - b.dueDate);
       const days = getCycleDaysInMonth();
       recurringBills.forEach(bill => {
@@ -1018,6 +941,7 @@
 
     /**************************************************************
      * Helper: Get the most recent paycheck amount based on selected day.
+     * (Not used if balance tracking is enabled, since we use the dynamic input.)
      **************************************************************/
     function getMostRecentPaycheck(selectedDay, daysInMonth) {
       let recent = null;
@@ -1065,8 +989,11 @@
 
     /**************************************************************
      * Calculation and Totals:
-     * Updated to filter bills/expenses from the cycle date (selectedDay) to periodEnd,
-     * and display upcoming bills/expenses in chronological order.
+     * Updated to:
+     * - Use the cycle date as the lower bound.
+     * - Treat bills due on 29-31 as due on the last day of the month.
+     * - Display an explanatory sentence for the pay-period totals.
+     * - If balance tracking is enabled, use the expected paycheck from the dynamic input.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -1078,35 +1005,36 @@
       const selectedDay = cycleDate.getDate();
       const currentDaysInMonth = new Date(cycleDate.getFullYear(), cycleDate.getMonth()+1, 0).getDate();
 
-      if (paydays.length === 0) {
+      if (paydays.length === 0 && !balanceTrackingEnabled) {
         alert("Please add at least one payday.");
         return;
       }
 
-      // Determine the start of the pay period using the most recent payday day.
-      // (Used for period end calculation, but upcoming bills start from selectedDay)
       const periodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
-      // Compute next payday difference from the cycle date.
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
-      // Full period length: from periodStart to periodEnd (with wrapping if necessary)
       let fullPeriodLength = (periodEnd >= periodStart)
         ? (periodEnd - periodStart + 1)
         : ((currentDaysInMonth - periodStart + 1) + periodEnd);
-      // Remaining days from cycle date to period end.
       let remainingDays = (periodEnd >= selectedDay)
         ? (periodEnd - selectedDay + 1)
         : ((currentDaysInMonth - selectedDay + 1) + periodEnd);
-
       const periodEndDisplay = (periodEnd <= currentDaysInMonth)
         ? periodEnd
         : (periodEnd - currentDaysInMonth) + " [next cycle]";
+
+      // Update explanatory sentence for pay-period totals.
       document.getElementById('payPeriodRange').textContent =
-        `(from Day ${periodStart} to Day ${periodEndDisplay} - Total: ${fullPeriodLength} days)`;
+        `This section displays the total expenses for the current pay period, which spans from Day ${periodStart} to Day ${periodEndDisplay} (a total of ${fullPeriodLength} days).`;
 
-      let paycheck = getMostRecentPaycheck(selectedDay, currentDaysInMonth);
+      let paycheck = balanceTrackingEnabled 
+                     ? parseFloat(document.getElementById('expectedPaycheck').value)
+                     : getMostRecentPaycheck(selectedDay, currentDaysInMonth);
+      if(balanceTrackingEnabled && (isNaN(paycheck) || paycheck <= 0)) {
+        alert("Please enter a valid Expected Paycheck Amount.");
+        return;
+      }
 
-      // For custom allocation, ensure allocations sum to paycheck.
       if(balanceTrackingEnabled && document.getElementById('distributionMethod').value === "custom") {
         let totalAllocated = 0;
         bankAccounts.forEach(account => {
@@ -1121,13 +1049,12 @@
         }
       }
 
-      // Pre-calculate required expenses per account (for proportional allocation).
       let requiredExpenses = {};
       if(balanceTrackingEnabled) {
         bankAccounts.forEach(account => {
           const billsForAccount = recurringBills.filter(bill => {
             return bill.bankAccountId === account.id &&
-                   isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
+                   isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth);
           });
           let totalBills = 0;
           billsForAccount.forEach(bill => {
@@ -1155,7 +1082,6 @@
         });
       }
 
-      // Build the Required Balances Summary.
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
       let overallCombined = 0;
@@ -1163,7 +1089,6 @@
         let startingBalance = (account.balance !== null && !isNaN(account.balance))
           ? account.balance
           : (balanceTrackingEnabled ? 0 : 0);
-
         let allocated = 0;
         if(balanceTrackingEnabled) {
           let method = document.getElementById('distributionMethod').value;
@@ -1188,10 +1113,9 @@
           ? (startingBalance + allocated)
           : ((account.balance !== null && !isNaN(account.balance)) ? account.balance : 0);
 
-        // Calculate totals for required bills/expenses from selectedDay to periodEnd.
         const billsForAccount = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id &&
-                 isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
+                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth);
         });
         let totalBills = 0;
         billsForAccount.forEach(bill => {
@@ -1266,10 +1190,9 @@
         listHeader.textContent = "Upcoming Bills/Expenses:";
         accountDiv.appendChild(listHeader);
 
-        // Combine and sort upcoming recurring bills and one-time expenses for this account.
         let upcomingItems = [];
         upcomingItems = upcomingItems.concat(
-          recurringBills.filter(bill => bill.bankAccountId === account.id && isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth))
+          recurringBills.filter(bill => bill.bankAccountId === account.id && isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth))
             .map(bill => ({...bill, type: 'bill'}))
         );
         upcomingItems = upcomingItems.concat(
@@ -1286,10 +1209,11 @@
           }).map(exp => ({...exp, type: 'expense'}))
         );
 
-        // Custom sort: if due date is less than selectedDay, treat it as due date + currentDaysInMonth.
         upcomingItems.sort((a, b) => {
-          const aDue = a.dueDate < selectedDay ? a.dueDate + currentDaysInMonth : a.dueDate;
-          const bDue = b.dueDate < selectedDay ? b.dueDate + currentDaysInMonth : b.dueDate;
+          const aEff = effectiveDueDate(a.dueDate, currentDaysInMonth);
+          const bEff = effectiveDueDate(b.dueDate, currentDaysInMonth);
+          const aDue = aEff < selectedDay ? aEff + currentDaysInMonth : aEff;
+          const bDue = bEff < selectedDay ? bEff + currentDaysInMonth : bEff;
           return aDue - bDue;
         });
 
@@ -1316,7 +1240,6 @@
         resultsDiv.appendChild(accountDiv);
       });
 
-      // Expense Totals Calculations:
       let payPeriodTotals = {};
       let monthlyTotals = {};
       bankAccounts.forEach(acc => {
@@ -1325,7 +1248,7 @@
       });
 
       recurringBills.forEach(bill => {
-        if(isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+        if(isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth)) {
           payPeriodTotals[bill.bankAccountId] += bill.amount;
         }
         monthlyTotals[bill.bankAccountId] += bill.amount;
