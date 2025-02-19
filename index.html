@@ -3,124 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <title>Enhanced Cash Flow Manager</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
   <style>
-    /* Overall page styling */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #e2eafc, #fdfbfb);
-      margin: 0;
-      padding: 20px;
-      color: #333;
+    :root {
+      --primary-color: #3498db;
+      --primary-dark: #2980b9;
+      --accent-color: #27ae60;
+      --accent-dark: #1e8449;
+      --error-color: #e74c3c;
+      --error-dark: #c0392b;
+      --text-color: #333;
+      --background-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --card-shadow: rgba(0, 0, 0, 0.1);
     }
-    h1, h2, h3 {
-      color: #2c3e50;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, var(--background-color) 0%, #ffffff 100%);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
     }
     h1 {
+      font-size: 2.5em;
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 40px;
+      color: var(--primary-dark);
+    }
+    h2 {
+      font-size: 1.8em;
+      margin-bottom: 20px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid var(--primary-color);
+    }
+    h3 {
+      font-size: 1.4em;
+      margin-bottom: 15px;
     }
     section {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 30px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px var(--card-shadow);
     }
     form input, form select, form button {
-      margin: 8px 0;
-      padding: 10px;
+      display: block;
       width: 100%;
-      max-width: 300px;
+      max-width: 400px;
+      font-size: 1em;
+      padding: 12px;
+      margin-bottom: 10px;
       border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      transition: border 0.2s;
+      border-radius: 6px;
+      transition: all 0.2s ease;
     }
     form input:focus, form select:focus {
-      border-color: #2980b9;
+      border-color: var(--primary-color);
       outline: none;
+      box-shadow: 0 0 4px rgba(52,152,219,0.5);
     }
     form button {
-      background-color: #2980b9;
+      background-color: var(--primary-color);
       color: #fff;
       border: none;
+      border-radius: 6px;
+      padding: 12px 20px;
       cursor: pointer;
+      font-weight: 500;
       transition: background 0.3s ease;
     }
     form button:hover {
-      background-color: #1c5980;
+      background-color: var(--primary-dark);
     }
     ul {
       list-style: none;
-      padding-left: 0;
+      padding: 0;
     }
     li {
-      background: #ecf0f1;
-      margin: 6px 0;
-      padding: 10px;
-      border-radius: 4px;
+      background: #f9f9f9;
+      margin-bottom: 8px;
+      padding: 12px;
+      border-radius: 6px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
     .item-text {
       flex: 1;
       margin-right: 10px;
     }
     .delete-btn {
-      background-color: #e74c3c;
+      background-color: var(--error-color);
       border: none;
       color: #fff;
-      padding: 6px 10px;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 6px;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
     .delete-btn:hover {
-      background-color: #c0392b;
+      background-color: var(--error-dark);
     }
     .edit-btn {
-      background-color: #27ae60;
+      background-color: var(--accent-color);
       border: none;
       color: #fff;
-      padding: 6px 10px;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 6px;
       cursor: pointer;
       margin-right: 5px;
+      transition: background 0.3s ease;
     }
     .edit-btn:hover {
-      background-color: #1e8449;
-    }
-    .account-summary {
-      border: 1px solid #bdc3c7;
-      margin: 10px 0;
-      padding: 15px;
-      border-radius: 6px;
-      background: #fdfdfd;
-    }
-    .hidden {
-      display: none;
+      background-color: var(--accent-dark);
     }
     table {
-      width: auto;
+      width: 100%;
+      border-collapse: collapse;
       margin-bottom: 10px;
     }
-    table, th, td {
-      border: 1px solid #666;
-      border-collapse: collapse;
-      padding: 5px;
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
     }
-    /* Expense Totals Section styling */
+    th {
+      background-color: var(--primary-color);
+      color: #fff;
+    }
     #expense-totals {
-      border: 2px solid #2980b9;
-      padding: 15px;
-      border-radius: 8px;
-      background: #eaf2f8;
+      border: 2px solid var(--primary-color);
+      padding: 20px;
+      border-radius: 10px;
+      background: #eaf4fc;
     }
     #expense-totals h2 {
       margin-top: 0;
     }
     #expense-totals h3 {
-      margin-bottom: 5px;
+      margin-bottom: 10px;
     }
     #expense-totals p {
       font-size: 0.95em;
@@ -130,7 +162,6 @@
       margin: 10px 0;
       padding-left: 20px;
     }
-    /* New styling for dynamic balance tracking section */
     #balanceTrackingToggleContainer {
       margin-bottom: 15px;
     }
@@ -138,236 +169,272 @@
       font-size: 0.9em;
       color: #555;
     }
-    /* Styling for Paycheck Distribution Method section */
     #distribution-section {
       margin-top: 20px;
-      padding: 15px;
-      border: 2px dashed #2980b9;
-      background-color: #f7f9fc;
-      border-radius: 6px;
+      padding: 20px;
+      border: 2px dashed var(--primary-color);
+      background-color: #f7faff;
+      border-radius: 8px;
     }
     #distribution-section select,
     #distribution-section input,
     #distribution-section button {
-      padding: 8px;
+      padding: 10px;
       margin: 5px 0;
       font-size: 1em;
-      max-width: 300px;
+      max-width: 400px;
     }
-    /* Additional spacing for Bank Accounts section */
     #bank-accounts {
       position: relative;
+    }
+    #balanceTrackingDynamic .dynamic-input {
+      margin-bottom: 15px;
+    }
+    #customAllocationFields div {
+      margin-bottom: 10px;
+    }
+    #customAllocationCounter {
+      font-weight: 500;
+      margin-top: 10px;
+    }
+    #lockedDistributionContainer {
+      margin-top: 10px;
+    }
+    .locked-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1f1f1;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+    }
+    .locked-delete-btn {
+      background-color: var(--error-color);
+      border: none;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .locked-delete-btn:hover {
+      background-color: var(--error-dark);
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Enhanced Cash Flow Manager</h1>
+  <div class="container">
+    <h1>Enhanced Cash Flow Manager</h1>
 
-  <!-- Paydays Section (for non‑tracking scenarios) -->
-  <section id="paydays">
-    <h2>Paydays</h2>
-    <form id="paydayForm">
-      <label for="paydayType">Payday Type:</label>
-      <select id="paydayType" required>
-        <option value="">Select Type</option>
-        <option value="specific">Specific Day</option>
-        <option value="1st15">1st and 15th</option>
-        <option value="daily">Daily</option>
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
-      </select>
-      <!-- For "specific" type -->
-      <div id="specificDayInput" class="hidden">
-        <label for="specificDay">Day of Month (1–31):</label>
-        <input type="number" id="specificDay" placeholder="e.g., 15" min="1" max="31">
-      </div>
-      <!-- NOTE: The Expected Paycheck Amount input has been moved -->
-      <button type="submit">Add Payday</button>
-    </form>
-    <ul id="paydayList"></ul>
-  </section>
-
-  <!-- CSV Import Section for Recurring Bills -->
-  <section id="csv-import">
-    <h2>CSV Import for Recurring Bills</h2>
-    <p>
-      You can import recurring bills from a CSV file. The CSV must have exactly these columns:
-      <code>Bill Name, Bill Amount, Due Date, Bank Account</code>.<br>
-      <strong>Important:</strong> Any bank listed in the CSV that is not already in the manual Bank Accounts section will be automatically added.
-    </p>
-    <p>Sample table:</p>
-    <table>
-      <tr>
-        <th>Bill Name</th>
-        <th>Bill Amount</th>
-        <th>Due Date</th>
-        <th>Bank Account</th>
-      </tr>
-      <tr>
-        <td>Rent</td>
-        <td>1200</td>
-        <td>1</td>
-        <td>Main Checking</td>
-      </tr>
-      <tr>
-        <td>Electricity</td>
-        <td>100</td>
-        <td>15</td>
-        <td>Main Checking</td>
-      </tr>
-    </table>
-    <br>
-    <label for="recurringCSV">Upload Recurring Bills CSV:</label>
-    <input type="file" id="recurringCSV" accept=".csv">
-  </section>
-
-  <!-- Bank Accounts Section -->
-  <section id="bank-accounts">
-    <h2>Bank Accounts</h2>
-    <div id="balanceTrackingToggleContainer">
-      <label>
-        <input type="checkbox" id="balanceTrackingToggle">
-        Track Bank Account Balances?
-      </label>
-      <p>When enabled, the system will use the expected paycheck allocations (and ignore your current balance) to determine your surplus.</p>
-    </div>
-    <form id="bankAccountForm">
-      <input type="text" id="bankName" placeholder="Bank Account Name" required>
-      <input type="number" id="bankBalance" placeholder="Current Bank Balance (optional)" step="0.01">
-      <button type="submit">Add Bank Account</button>
-    </form>
-    <ul id="bankAccountList"></ul>
-    <!-- Dynamic section for balance tracking (appears only if tracking is enabled) -->
-    <div id="balanceTrackingDynamic" class="hidden">
-      <div class="dynamic-input">
-        <label for="expectedPaycheck">Expected Paycheck Amount (after-tax):</label>
-        <input type="number" id="expectedPaycheck" placeholder="e.g., 2000" step="0.01">
-      </div>
-      <div id="distribution-section">
-        <h2>Paycheck Distribution Method</h2>
-        <select id="distributionMethod">
-          <option value="equal">Equal Split</option>
-          <option value="custom">Custom Allocation</option>
-          <option value="single">Single Account</option>
-          <option value="proportional">Proportional to Expenses</option>
+    <!-- Paydays Section (for non‑tracking scenarios) -->
+    <section id="paydays">
+      <h2>Paydays</h2>
+      <form id="paydayForm">
+        <label for="paydayType">Payday Type:</label>
+        <select id="paydayType" required>
+          <option value="">Select Type</option>
+          <option value="specific">Specific Day</option>
+          <option value="1st15">1st and 15th</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
         </select>
-        <div id="customAllocationFields" class="hidden"></div>
-        <div id="singleAccountSelectorContainer" class="hidden">
-          <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
-          <select id="singleAccountSelector">
-            <!-- Options will be populated with bank accounts -->
+        <!-- For "specific" type -->
+        <div id="specificDayInput" class="hidden">
+          <label for="specificDay">Day of Month (1–31):</label>
+          <input type="number" id="specificDay" placeholder="e.g., 15" min="1" max="31">
+        </div>
+        <button type="submit">Add Payday</button>
+      </form>
+      <ul id="paydayList"></ul>
+    </section>
+
+    <!-- CSV Import Section for Recurring Bills -->
+    <section id="csv-import">
+      <h2>CSV Import for Recurring Bills</h2>
+      <p>
+        You can import recurring bills from a CSV file. The CSV must have exactly these columns:
+        <code>Bill Name, Bill Amount, Due Date, Bank Account</code>.<br>
+        <strong>Important:</strong> Any bank listed in the CSV that is not already in the manual Bank Accounts section will be automatically added.
+      </p>
+      <p>Sample table:</p>
+      <table>
+        <tr>
+          <th>Bill Name</th>
+          <th>Bill Amount</th>
+          <th>Due Date</th>
+          <th>Bank Account</th>
+        </tr>
+        <tr>
+          <td>Rent</td>
+          <td>1200</td>
+          <td>1</td>
+          <td>Main Checking</td>
+        </tr>
+        <tr>
+          <td>Electricity</td>
+          <td>100</td>
+          <td>15</td>
+          <td>Main Checking</td>
+        </tr>
+      </table>
+      <br>
+      <label for="recurringCSV">Upload Recurring Bills CSV:</label>
+      <input type="file" id="recurringCSV" accept=".csv">
+    </section>
+
+    <!-- Bank Accounts Section -->
+    <section id="bank-accounts">
+      <h2>Bank Accounts</h2>
+      <div id="balanceTrackingToggleContainer">
+        <label>
+          <input type="checkbox" id="balanceTrackingToggle">
+          Track Bank Account Balances?
+        </label>
+        <p>When enabled, the system will use the expected paycheck allocations (and ignore your current balance) to determine your surplus.</p>
+      </div>
+      <form id="bankAccountForm">
+        <input type="text" id="bankName" placeholder="Bank Account Name" required>
+        <input type="number" id="bankBalance" placeholder="Current Bank Balance (optional)" step="0.01">
+        <button type="submit">Add Bank Account</button>
+      </form>
+      <ul id="bankAccountList"></ul>
+      <!-- Dynamic section for balance tracking (appears only if tracking is enabled) -->
+      <div id="balanceTrackingDynamic" class="hidden">
+        <div class="dynamic-input">
+          <label for="expectedPaycheck">Expected Paycheck Amount (after-tax):</label>
+          <input type="number" id="expectedPaycheck" placeholder="e.g., 2000" step="0.01">
+        </div>
+        <div id="distribution-section">
+          <h2>Paycheck Distribution Method</h2>
+          <select id="distributionMethod">
+            <option value="equal">Equal Split</option>
+            <option value="custom">Custom Allocation</option>
+            <option value="single">Single Account</option>
+            <option value="proportional">Proportional to Expenses</option>
           </select>
+          <div id="customAllocationFields" class="hidden"></div>
+          <div id="singleAccountSelectorContainer" class="hidden">
+            <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
+            <select id="singleAccountSelector">
+              <!-- Options will be populated with bank accounts -->
+            </select>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Recurring Bills Section -->
-  <section id="recurring-bills">
-    <h2>Recurring Bills</h2>
-    <form id="billForm">
-      <input type="text" id="billName" placeholder="Bill Name (e.g., Rent)" required>
-      <input type="number" id="billAmount" placeholder="Bill Amount" required step="0.01">
-      <input type="number" id="billDueDate" placeholder="Due Date (Day 1–31)" required min="1" max="31">
-      <select id="billBankAccount" required>
-        <option value="">Select Bank Account</option>
-      </select>
-      <button type="submit">Add Recurring Bill</button>
-    </form>
-    <ul id="billList"></ul>
-  </section>
-
-  <!-- Periodic Expenses Section -->
-  <section id="oneTime-expenses">
-    <h2>Periodic Expenses</h2>
-    <p>
-      Periodic Expenses are costs that do not occur every month but need to be planned for on a regular basis.
-      For example, car insurance that is due twice a year or a gym membership that is only due in certain months.
-    </p>
-    <form id="expenseForm">
-      <input type="text" id="expenseName" placeholder="Expense Name (e.g., Car Insurance)" required>
-      <input type="number" id="expenseAmount" placeholder="Expense Amount" required step="0.01">
-      <input type="number" id="expenseDueDate" placeholder="Due Day (1–31)" required min="1" max="31">
-      <select id="expenseBankAccount" required>
-        <option value="">Select Bank Account</option>
-      </select>
-      <h3>Expense Plan Type</h3>
-      <div>
-        <label>
-          <input type="radio" name="expensePlanType" value="occurrence" checked>
-          Occurrences Per Year
-        </label>
-        <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
-          Use this option if the expense occurs a fixed number of times per year.
-          For example, if your car insurance is due twice a year, set Occurrences Per Year to 2.
-        </p>
-      </div>
-      <div>
-        <label>
-          <input type="radio" name="expensePlanType" value="specific">
-          Specific Months
-        </label>
-        <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
-          Use this option if you know the exact months when the expense is due.
-          For example, if your gym membership is due in January and July, add 1 and 7 respectively.
-        </p>
-      </div>
-      <div id="occurrenceSection">
-        <input type="number" id="expenseOccurrences" placeholder="Occurrences Per Year (e.g., 2)" min="0">
-      </div>
-      <div id="specificMonthsSection" class="hidden">
-        <label for="expenseMonthSelect">Select Month:</label>
-        <select id="expenseMonthSelect">
-          <option value="1">January</option>
-          <option value="2">February</option>
-          <option value="3">March</option>
-          <option value="4">April</option>
-          <option value="5">May</option>
-          <option value="6">June</option>
-          <option value="7">July</option>
-          <option value="8">August</option>
-          <option value="9">September</option>
-          <option value="10">October</option>
-          <option value="11">November</option>
-          <option value="12">December</option>
+    <!-- Recurring Bills Section -->
+    <section id="recurring-bills">
+      <h2>Recurring Bills</h2>
+      <form id="billForm">
+        <input type="text" id="billName" placeholder="Bill Name (e.g., Rent)" required>
+        <input type="number" id="billAmount" placeholder="Bill Amount" required step="0.01">
+        <input type="number" id="billDueDate" placeholder="Due Date (Day 1–31)" required min="1" max="31">
+        <select id="billBankAccount" required>
+          <option value="">Select Bank Account</option>
         </select>
-        <button type="button" id="addExpenseMonthBtn">Add Month</button>
-        <ul id="expenseMonthsList"></ul>
+        <button type="submit">Add Recurring Bill</button>
+      </form>
+      <ul id="billList"></ul>
+    </section>
+
+    <!-- Periodic Expenses Section -->
+    <section id="oneTime-expenses">
+      <h2>Periodic Expenses</h2>
+      <p>
+        Periodic Expenses are costs that do not occur every month but need to be planned for on a regular basis.
+        For example, car insurance that is due twice a year or a gym membership that is only due in certain months.
+      </p>
+      <form id="expenseForm">
+        <input type="text" id="expenseName" placeholder="Expense Name (e.g., Car Insurance)" required>
+        <input type="number" id="expenseAmount" placeholder="Expense Amount" required step="0.01">
+        <input type="number" id="expenseDueDate" placeholder="Due Day (1–31)" required min="1" max="31">
+        <select id="expenseBankAccount" required>
+          <option value="">Select Bank Account</option>
+        </select>
+        <h3>Expense Plan Type</h3>
+        <div>
+          <label>
+            <input type="radio" name="expensePlanType" value="occurrence" checked>
+            Occurrences Per Year
+          </label>
+          <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
+            Use this option if the expense occurs a fixed number of times per year.
+            For example, if your car insurance is due twice a year, set Occurrences Per Year to 2.
+          </p>
+        </div>
+        <div>
+          <label>
+            <input type="radio" name="expensePlanType" value="specific">
+            Specific Months
+          </label>
+          <p style="margin-left: 20px; font-size: 0.9em; color: #555;">
+            Use this option if you know the exact months when the expense is due.
+            For example, if your gym membership is due in January and July, add 1 and 7 respectively.
+          </p>
+        </div>
+        <div id="occurrenceSection">
+          <input type="number" id="expenseOccurrences" placeholder="Occurrences Per Year (e.g., 2)" min="0">
+        </div>
+        <div id="specificMonthsSection" class="hidden">
+          <label for="expenseMonthSelect">Select Month:</label>
+          <select id="expenseMonthSelect">
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+          <button type="button" id="addExpenseMonthBtn">Add Month</button>
+          <ul id="expenseMonthsList"></ul>
+        </div>
+        <button type="submit">Add Periodic Expense</button>
+      </form>
+      <ul id="expenseList"></ul>
+    </section>
+
+    <!-- Calculate Required Balances Section -->
+    <section id="calculation">
+      <h2>Calculate Required Balances</h2>
+      <label for="cycleDate">Select Cycle Date:</label>
+      <input type="date" id="cycleDate" required>
+      <button id="calculateButton">Calculate</button>
+    </section>
+
+    <!-- Required Balances Summary Section -->
+    <section id="output">
+      <h2>Required Balances Summary</h2>
+      <div id="results"></div>
+    </section>
+
+    <!-- Expense Totals Section -->
+    <section id="expense-totals">
+      <h2>Expense Totals</h2>
+      <div id="payPeriodTotals">
+        <h3>Pay-Period Expense Totals</h3>
+        <p id="payPeriodRange">This section displays the total expenses for the current pay period.</p>
+        <div id="payPeriodCombined"></div>
       </div>
-      <button type="submit">Add Periodic Expense</button>
-    </form>
-    <ul id="expenseList"></ul>
-  </section>
-
-  <!-- Calculate Required Balances Section -->
-  <section id="calculation">
-    <h2>Calculate Required Balances</h2>
-    <label for="cycleDate">Select Cycle Date:</label>
-    <input type="date" id="cycleDate" required>
-    <button id="calculateButton">Calculate</button>
-  </section>
-
-  <!-- Required Balances Summary Section -->
-  <section id="output">
-    <h2>Required Balances Summary</h2>
-    <div id="results"></div>
-  </section>
-
-  <!-- Expense Totals Section -->
-  <section id="expense-totals">
-    <h2>Expense Totals</h2>
-    <div id="payPeriodTotals">
-      <h3>Pay-Period Expense Totals</h3>
-      <p id="payPeriodRange">This section displays the total expenses for the current pay period.</p>
-      <div id="payPeriodCombined"></div>
-    </div>
-    <div id="monthlyTotals">
-      <h3>Monthly Expense Totals</h3>
-      <p>This section shows the total monthly expenses along with a breakdown by bank account and lists all bills.</p>
-      <div id="monthlyCombined"></div>
-      <div id="monthlyByBank"></div>
-    </div>
-  </section>
+      <div id="monthlyTotals">
+        <h3>Monthly Expense Totals</h3>
+        <p>This section shows the total monthly expenses along with a breakdown by bank account and lists all bills.</p>
+        <div id="monthlyCombined"></div>
+        <div id="monthlyByBank"></div>
+      </div>
+    </section>
+  </div>
 
   <script>
     /**************************************************************
