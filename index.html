@@ -50,12 +50,6 @@
       font-size: 1.4em;
       margin-bottom: 15px;
     }
-    /* Force radio buttons to sit in the middle of their line */
-.expense-plan-type input[type="radio"] {
-  vertical-align: middle;
-  margin-top: -10px; /* or 0, adjust as needed */
-  margin-right: 60px; /* small space between radio and text */
-}
     section {
       background: var(--card-bg);
       border-radius: 12px;
@@ -261,6 +255,20 @@
     .hidden {
       display: none;
     }
+    /* =========================
+   Fix for Radio Button Alignment
+   ========================= */
+.expense-plan-type label {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.5em; /* Optional: space between label groups */
+}
+
+.expense-plan-type input[type="radio"] {
+  margin-right: 8px;  /* Space between the radio and the text */
+  vertical-align: middle;
+}
+
   </style>
 </head>
 <body>
