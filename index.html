@@ -474,6 +474,14 @@
     }
 
     /**************************************************************
+     * Helper: For bills due on 29-31 in a month with fewer days,
+     * return the effective due date.
+     **************************************************************/
+    function effectiveDueDate(dueDate, daysInMonth) {
+      return (dueDate > daysInMonth) ? daysInMonth : dueDate;
+    }
+
+    /**************************************************************
      * Utility: Update bank account dropdowns in bills and expenses.
      **************************************************************/
     function updateBankAccountDropdowns() {
@@ -790,6 +798,7 @@
 
     /**************************************************************
      * Recurring Bill: Add a new recurring bill.
+     * Bills are now sorted in ascending order by due date.
      **************************************************************/
     document.getElementById('billForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -812,10 +821,13 @@
 
     /**************************************************************
      * Update Recurring Bills list UI.
+     * Bills are displayed in chronological order by due date.
      **************************************************************/
     function updateBillList() {
       const billList = document.getElementById('billList');
       billList.innerHTML = "";
+      // Sort bills by due date
+      recurringBills.sort((a, b) => a.dueDate - b.dueDate);
       const days = getCycleDaysInMonth();
       recurringBills.forEach(bill => {
         const bankAccount = bankAccounts.find(acc => acc.id === bill.bankAccountId);
@@ -953,14 +965,6 @@
     }
 
     /**************************************************************
-     * Helper: For bills due on 29-31 in a month with fewer days,
-     * return the effective due date.
-     **************************************************************/
-    function effectiveDueDate(dueDate, daysInMonth) {
-      return (dueDate > daysInMonth) ? daysInMonth : dueDate;
-    }
-
-    /**************************************************************
      * Helper: Compute expected pay periods per year based on paydays.
      **************************************************************/
     function getExpectedPayPeriodsPerYear() {
@@ -1061,6 +1065,8 @@
 
     /**************************************************************
      * Calculation and Totals:
+     * Updated to filter bills/expenses from the cycle date (selectedDay) to periodEnd,
+     * and display upcoming bills/expenses in chronological order.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -1078,6 +1084,7 @@
       }
 
       // Determine the start of the pay period using the most recent payday day.
+      // (Used for period end calculation, but upcoming bills start from selectedDay)
       const periodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
       // Compute next payday difference from the cycle date.
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
@@ -1120,7 +1127,7 @@
         bankAccounts.forEach(account => {
           const billsForAccount = recurringBills.filter(bill => {
             return bill.bankAccountId === account.id &&
-                   isDueWithin(bill.dueDate, periodStart, periodEnd, currentDaysInMonth);
+                   isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
           });
           let totalBills = 0;
           billsForAccount.forEach(bill => {
@@ -1132,14 +1139,13 @@
               if(exp.planType === 'occurrence' && exp.occurrences > 0) {
                 totalPeriodic += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
               } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-                if(
-                  exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
-                  isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)
+                if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
+                   isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)
                 ) {
                   totalPeriodic += exp.amount;
                 }
               } else {
-                if(isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
+                if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
                   totalPeriodic += exp.amount;
                 }
               }
@@ -1182,9 +1188,10 @@
           ? (startingBalance + allocated)
           : ((account.balance !== null && !isNaN(account.balance)) ? account.balance : 0);
 
+        // Calculate totals for required bills/expenses from selectedDay to periodEnd.
         const billsForAccount = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id &&
-                 isDueWithin(bill.dueDate, periodStart, periodEnd, currentDaysInMonth);
+                 isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth);
         });
         let totalBills = 0;
         billsForAccount.forEach(bill => {
@@ -1196,14 +1203,13 @@
             if(exp.planType === 'occurrence' && exp.occurrences > 0) {
               totalPeriodic += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
             } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-              if(
-                exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
-                isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)
+              if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
+                 isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)
               ) {
                 totalPeriodic += exp.amount;
               }
             } else {
-              if(isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
+              if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
                 totalPeriodic += exp.amount;
               }
             }
@@ -1245,7 +1251,7 @@
 
         const requiredPara = document.createElement('p');
         requiredPara.textContent =
-          `Total Required (from Day ${periodStart} to Day ${periodEndDisplay}): $${totalRequired.toFixed(2)}`;
+          `Total Required (from Day ${selectedDay} to Day ${periodEndDisplay}): $${totalRequired.toFixed(2)}`;
         accountDiv.appendChild(requiredPara);
 
         if(balanceTrackingEnabled && availableFunds < totalRequired) {
@@ -1260,33 +1266,51 @@
         listHeader.textContent = "Upcoming Bills/Expenses:";
         accountDiv.appendChild(listHeader);
 
-        const list = document.createElement('ul');
-        billsForAccount.forEach(bill => {
-          const li = document.createElement('li');
-          li.textContent =
-            `${bill.name} - $${bill.amount.toFixed(2)} due on Day ${effectiveDueDate(bill.dueDate, currentDaysInMonth)}`;
-          list.appendChild(li);
-        });
-        oneTimeExpenses.forEach(exp => {
-          if(
-            exp.bankAccountId === account.id &&
-            isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)
-          ) {
-            let expText = "";
+        // Combine and sort upcoming recurring bills and one-time expenses for this account.
+        let upcomingItems = [];
+        upcomingItems = upcomingItems.concat(
+          recurringBills.filter(bill => bill.bankAccountId === account.id && isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth))
+            .map(bill => ({...bill, type: 'bill'}))
+        );
+        upcomingItems = upcomingItems.concat(
+          oneTimeExpenses.filter(exp => {
+            if(exp.bankAccountId !== account.id) return false;
             if(exp.planType === 'occurrence' && exp.occurrences > 0) {
-              expText =
-                `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${effectiveDueDate(exp.dueDate, currentDaysInMonth)} (Occurs ${exp.occurrences}x/yr)`;
+              return isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth);
             } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-              expText =
-                `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${effectiveDueDate(exp.dueDate, currentDaysInMonth)} (Due in: ${exp.specificMonths.map(m => monthName(parseInt(m))).join(', ')})`;
+              return exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
+                     isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth);
             } else {
-              expText =
-                `${exp.name} - $${exp.amount.toFixed(2)} due on Day ${effectiveDueDate(exp.dueDate, currentDaysInMonth)} (One-Time)`;
+              return isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth);
             }
-            const li = document.createElement('li');
-            li.textContent = expText;
-            list.appendChild(li);
+          }).map(exp => ({...exp, type: 'expense'}))
+        );
+
+        // Custom sort: if due date is less than selectedDay, treat it as due date + currentDaysInMonth.
+        upcomingItems.sort((a, b) => {
+          const aDue = a.dueDate < selectedDay ? a.dueDate + currentDaysInMonth : a.dueDate;
+          const bDue = b.dueDate < selectedDay ? b.dueDate + currentDaysInMonth : b.dueDate;
+          return aDue - bDue;
+        });
+
+        const list = document.createElement('ul');
+        upcomingItems.forEach(item => {
+          const dueDay = effectiveDueDate(item.dueDate, currentDaysInMonth);
+          let itemText = "";
+          if(item.type === 'bill') {
+            itemText = `${item.name} - $${item.amount.toFixed(2)} (Bill) due on Day ${dueDay}`;
+          } else {
+            if(item.planType === 'occurrence' && item.occurrences > 0) {
+              itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, Occurs ${item.occurrences}x/yr) due on Day ${dueDay}`;
+            } else if(item.planType === 'specific' && item.specificMonths.length > 0) {
+              itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, Due in: ${item.specificMonths.map(m => monthName(parseInt(m))).join(', ')}) due on Day ${dueDay}`;
+            } else {
+              itemText = `${item.name} - $${item.amount.toFixed(2)} (Expense, One-Time) due on Day ${dueDay}`;
+            }
           }
+          const li = document.createElement('li');
+          li.textContent = itemText;
+          list.appendChild(li);
         });
         accountDiv.appendChild(list);
         resultsDiv.appendChild(accountDiv);
@@ -1301,7 +1325,7 @@
       });
 
       recurringBills.forEach(bill => {
-        if(isDueWithin(bill.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
+        if(isDueWithin(bill.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
           payPeriodTotals[bill.bankAccountId] += bill.amount;
         }
         monthlyTotals[bill.bankAccountId] += bill.amount;
@@ -1314,7 +1338,7 @@
         } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
           if(
             exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
-            isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)
+            isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)
           ) {
             payPeriodTotals[exp.bankAccountId] += exp.amount;
           }
