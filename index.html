@@ -258,17 +258,15 @@
     /* =========================
    Fix for Radio Button Alignment
    ========================= */
-.expense-plan-type label {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 0.5em; /* Optional: space between label groups */
-}
-
-.expense-plan-type input[type="radio"] {
-  margin-right: 8px;  /* Space between the radio and the text */
-  vertical-align: middle;
-}
-
+    .expense-plan-type label {
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 0.5em; /* Optional: space between label groups */
+    }
+    .expense-plan-type input[type="radio"] {
+      margin-right: 8px;  /* Space between the radio and the text */
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -350,7 +348,6 @@
       <ul id="bankAccountList"></ul>
       <!-- Dynamic section for balance tracking (appears only if tracking is enabled) -->
       <div id="balanceTrackingDynamic" class="hidden">
-        <!-- New Expected Paycheck Amount container -->
        <form id="paycheckForm"> 
         <div id="expectedPaycheckSection" class="paycheck-amount-section">
           <h2>Expected Paycheck Amount (After-Tax)</h2>
@@ -406,7 +403,6 @@
           <option value="">Select Bank Account</option>
         </select>
         <h3>Expense Plan Type</h3>
-        <!-- Wrapped radio buttons in a new container -->
         <div class="expense-plan-type">
           <div>
             <label>
@@ -745,7 +741,6 @@
           return;
         }
       }
-      // Note: Expected Paycheck Amount is now entered in the dynamic section.
       const id = Date.now().toString() + "_pd";
       paydays.push({ id, type, day });
       updatePaydayList();
@@ -790,7 +785,6 @@
       e.preventDefault();
       const name = document.getElementById('bankName').value;
       const balanceInput = document.getElementById('bankBalance').value;
-      // For expense totals we now ignore the current balance; it’s only used if not tracking.
       const balance = balanceInput ? parseFloat(balanceInput) : (balanceTrackingEnabled ? 0 : null);
       const id = Date.now().toString() + "_bank";
       bankAccounts.push({ id, name, balance });
@@ -844,7 +838,6 @@
 
     /**************************************************************
      * Recurring Bill: Add a new recurring bill.
-     * Bills are now sorted in ascending order by due date.
      **************************************************************/
     document.getElementById('billForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -1220,36 +1213,38 @@
         header.textContent = account.name;
         accountDiv.appendChild(header);
 
-        // a. Deposit for This Pay Period:
-        const depositPara = document.createElement('p');
-        depositPara.textContent = `Deposit for This Pay Period: $${allocated.toFixed(2)}`;
-        accountDiv.appendChild(depositPara);
+        // When tracking is enabled, show deposit and current balance; otherwise, skip them.
+        if(balanceTrackingEnabled) {
+          const depositPara = document.createElement('p');
+          depositPara.textContent = `Deposit for This Pay Period: $${allocated.toFixed(2)}`;
+          accountDiv.appendChild(depositPara);
 
-        // b. Current Balance for this Bank Account:
-        const currentBalancePara = document.createElement('p');
-        currentBalancePara.textContent = `Current Balance for this Bank Account: $${currentBalance.toFixed(2)}`;
-        accountDiv.appendChild(currentBalancePara);
+          const currentBalancePara = document.createElement('p');
+          currentBalancePara.textContent = `Current Balance for this Bank Account: $${currentBalance.toFixed(2)}`;
+          accountDiv.appendChild(currentBalancePara);
+        }
 
-        // c. Remaining Expenses for This Pay Period for this account:
+        // Always show the remaining expenses.
         const requiredPara = document.createElement('p');
         requiredPara.textContent = `Remaining Expenses for This Pay Period for this account: $${totalRequired.toFixed(2)}`;
         accountDiv.appendChild(requiredPara);
 
-        // d. Estimated Surplus for This Pay Period:
-        const surplusPara = document.createElement('p');
-        if(surplus >= 0) {
-          surplusPara.style.color = 'green';
-          surplusPara.textContent = `Estimated Surplus for This Pay Period: $${surplus.toFixed(2)}`;
-        } else {
-          surplusPara.style.color = 'red';
-          surplusPara.textContent = `Estimated Deficit for This Pay Period: $${Math.abs(surplus).toFixed(2)}`;
-        }
-        accountDiv.appendChild(surplusPara);
+        // Only if tracking is enabled, show surplus/deficit and daily spend budget.
+        if(balanceTrackingEnabled) {
+          const surplusPara = document.createElement('p');
+          if(surplus >= 0) {
+            surplusPara.style.color = 'green';
+            surplusPara.textContent = `Estimated Surplus for This Pay Period: $${surplus.toFixed(2)}`;
+          } else {
+            surplusPara.style.color = 'red';
+            surplusPara.textContent = `Estimated Deficit for This Pay Period: $${Math.abs(surplus).toFixed(2)}`;
+          }
+          accountDiv.appendChild(surplusPara);
 
-        // e. Daily Spend Budget for the Remainder of This Pay Period:
-        const dailyPara = document.createElement('p');
-        dailyPara.textContent = `Daily Spend Budget for the Remainder of This Pay Period (${remainingDays} days): $${dailySpendBudget.toFixed(2)}`;
-        accountDiv.appendChild(dailyPara);
+          const dailyPara = document.createElement('p');
+          dailyPara.textContent = `Daily Spend Budget for the Remainder of This Pay Period (${remainingDays} days): $${dailySpendBudget.toFixed(2)}`;
+          accountDiv.appendChild(dailyPara);
+        }
 
         // List upcoming items for this account
         const listHeader = document.createElement('p');
@@ -1289,11 +1284,15 @@
       bankAccounts.forEach(acc => {
         combinedPayPeriod += requiredExpenses[acc.id] || 0;
       });
-      // Here, Estimated Surplus for this pay period = (Expected Income) - (Combined Expenses)
       let overallSurplus = paycheck - combinedPayPeriod;
-      document.getElementById('payPeriodCombined').innerHTML =
-        `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}<br>` +
-        `<span style="color:${overallSurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Pay Period: $${overallSurplus.toFixed(2)}</span>`;
+      if(balanceTrackingEnabled) {
+         document.getElementById('payPeriodCombined').innerHTML =
+            `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}<br>` +
+            `<span style="color:${overallSurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Pay Period: $${overallSurplus.toFixed(2)}</span>`;
+      } else {
+         document.getElementById('payPeriodCombined').innerHTML =
+            `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}`;
+      }
 
       // Monthly Totals Calculations
       let monthlyTotals = {};
@@ -1316,7 +1315,6 @@
       for (let id in monthlyTotals) {
         combinedMonthly += monthlyTotals[id];
       }
-      // Compute expected monthly allocations based on distribution method
       let expectedPayPeriodsPerYear = getExpectedPayPeriodsPerYear();
       let monthlyPaycheck = paycheck * (expectedPayPeriodsPerYear / 12);
       let monthlyBankList = "";
@@ -1342,11 +1340,13 @@
         }
         const surplusMonthly = monthlyAllocated - (monthlyTotals[acc.id] || 0);
         monthlyBankList += `<h4>${acc.name} - Total Expenses: $${monthlyTotals[acc.id].toFixed(2)}</h4>`;
-        monthlyBankList += `<p>Estimated Monthly Deposit for ${acc.name}: $${monthlyAllocated.toFixed(2)}</p>`;
-        if(surplusMonthly >= 0) {
-          monthlyBankList += `<p style="color:green;">Estimated Monthly Surplus for ${acc.name}: $${surplusMonthly.toFixed(2)}</p>`;
-        } else {
-          monthlyBankList += `<p style="color:red;">Estimated Monthly Deficit for ${acc.name}: $${Math.abs(surplusMonthly).toFixed(2)}</p>`;
+        if(balanceTrackingEnabled) {
+          monthlyBankList += `<p>Estimated Monthly Deposit for ${acc.name}: $${monthlyAllocated.toFixed(2)}</p>`;
+          if(surplusMonthly >= 0) {
+            monthlyBankList += `<p style="color:green;">Estimated Monthly Surplus for ${acc.name}: $${surplusMonthly.toFixed(2)}</p>`;
+          } else {
+            monthlyBankList += `<p style="color:red;">Estimated Monthly Deficit for ${acc.name}: $${Math.abs(surplusMonthly).toFixed(2)}</p>`;
+          }
         }
         let billsList = "<ul>";
         recurringBills.filter(bill => bill.bankAccountId === acc.id).forEach(bill => {
@@ -1362,11 +1362,12 @@
         billsList += "</ul>";
         monthlyBankList += billsList;
       });
-      // Display Combined Monthly Expenses and add Estimated Monthly Surplus
       document.getElementById('monthlyCombined').innerHTML =
         `<strong>Combined Monthly Expenses:</strong> $${combinedMonthly.toFixed(2)}`;
       let monthlySurplus = monthlyPaycheck - combinedMonthly;
-      document.getElementById('monthlyCombined').innerHTML += `<br><span style="color:${monthlySurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Month: $${monthlySurplus.toFixed(2)}</span>`;
+      if(balanceTrackingEnabled) {
+         document.getElementById('monthlyCombined').innerHTML += `<br><span style="color:${monthlySurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Month: $${monthlySurplus.toFixed(2)}</span>`;
+      }
       document.getElementById('monthlyByBank').innerHTML = monthlyBankList;
     });
 
