@@ -1125,7 +1125,9 @@
         return;
       }
 
-      const periodStart = selectedDay;
+      const remainingExpenseStart = selectedDay;  // For Remaining Expenses (user-selected Cycle Date)
+      const payPeriodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);  // For full pay period expenses
+
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
       let fullPeriodLength = (periodEnd >= periodStart)
@@ -1152,10 +1154,25 @@
       // Compute required expenses for each bank account for the current pay period
       let requiredExpenses = {};
       bankAccounts.forEach(account => {
-        const billsForAccount = recurringBills.filter(bill => {
+        const payPeriodBills = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id &&
-                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth);
+         isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), payPeriodStart, periodEnd, currentDaysInMonth);
         });
+        const payPeriodExpenses = oneTimeExpenses.filter(exp => {
+          if(exp.bankAccountId === account.id) {
+            if(exp.planType === 'occurrence' && exp.occurrences > 0) {
+              return isDueWithin(exp.dueDate, payPeriodStart, periodEnd, currentDaysInMonth);
+            } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
+              return exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
+                isDueWithin(exp.dueDate, payPeriodStart, periodEnd, currentDaysInMonth);
+            } else {
+              return isDueWithin(exp.dueDate, payPeriodStart, periodEnd, currentDaysInMonth);
+            }
+          }
+          return false;
+        });
+
+
         let totalBills = 0;
         billsForAccount.forEach(bill => {
           totalBills += bill.amount;
@@ -1288,8 +1305,13 @@
       // Expense Totals: Pay-Period calculations
       let combinedPayPeriod = 0;
       bankAccounts.forEach(acc => {
-        combinedPayPeriod += requiredExpenses[acc.id] || 0;
+        const totalPayPeriodExpenses = 
+          payPeriodBills.filter(b => b.bankAccountId === acc.id).reduce((sum, b) => sum + b.amount, 0) +
+          payPeriodExpenses.filter(e => e.bankAccountId === acc.id).reduce((sum, e) => sum + e.amount, 0);
+        
+        combinedPayPeriod += totalPayPeriodExpenses;
       });
+
       let overallSurplus = paycheck - combinedPayPeriod;
       if(balanceTrackingEnabled) {
          document.getElementById('payPeriodCombined').innerHTML =
