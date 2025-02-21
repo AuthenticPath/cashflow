@@ -1125,7 +1125,7 @@
         return;
       }
 
-      const periodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
+      const periodStart = selectedDay;
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
       let fullPeriodLength = (periodEnd >= periodStart)
@@ -1154,7 +1154,7 @@
       bankAccounts.forEach(account => {
         const billsForAccount = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id &&
-                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), periodStart, periodEnd, currentDaysInMonth);
+                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth);
         });
         let totalBills = 0;
         billsForAccount.forEach(bill => {
