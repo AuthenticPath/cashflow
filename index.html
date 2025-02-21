@@ -1120,19 +1120,22 @@
       const selectedDay = cycleDate.getDate();
       const currentDaysInMonth = new Date(cycleDate.getFullYear(), cycleDate.getMonth()+1, 0).getDate();
 
+      // Compute full pay period start using the most recent payday
+      const fullPeriodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
+
       if (paydays.length === 0 && !balanceTrackingEnabled) {
         alert("Please add at least one payday.");
         return;
       }
 
-      const remainingExpenseStart = selectedDay;  // For Remaining Expenses (user-selected Cycle Date)
-      const payPeriodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);  // For full pay period expenses
-
+      // For remaining expenses, we use the cycle date as the start (i.e. expenses remaining from now to period end)
+      const periodStart = selectedDay;
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
-      let fullPeriodLength = (periodEnd >= periodStart)
-        ? (periodEnd - periodStart + 1)
-        : ((currentDaysInMonth - periodStart + 1) + periodEnd);
+      // Compute full period length from the full period start (most recent payday) to periodEnd
+      let fullPeriodLength = (periodEnd >= fullPeriodStart)
+        ? (periodEnd - fullPeriodStart + 1)
+        : ((currentDaysInMonth - fullPeriodStart + 1) + periodEnd);
       let remainingDays = (periodEnd >= selectedDay)
         ? (periodEnd - selectedDay + 1)
         : ((currentDaysInMonth - selectedDay + 1) + periodEnd);
@@ -1141,7 +1144,7 @@
         : (periodEnd - currentDaysInMonth) + " [next cycle]";
 
       document.getElementById('payPeriodRange').textContent =
-        `This section displays the expenses for the current pay period (Day ${periodStart} to Day ${periodEndDisplay}, ${fullPeriodLength} days).`;
+        `This section displays the expenses for the current pay period (Day ${fullPeriodStart} to Day ${periodEndDisplay}, ${fullPeriodLength} days).`;
 
       let paycheck = balanceTrackingEnabled 
                      ? parseFloat(document.getElementById('expectedPaycheck').value)
@@ -1151,28 +1154,13 @@
         return;
       }
 
-      // Compute required expenses for each bank account for the current pay period
+      // Compute remaining expenses (from cycle date to period end) per bank account
       let requiredExpenses = {};
       bankAccounts.forEach(account => {
-        const payPeriodBills = recurringBills.filter(bill => {
+        const billsForAccount = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id &&
-         isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), payPeriodStart, periodEnd, currentDaysInMonth);
+                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth);
         });
-        const payPeriodExpenses = oneTimeExpenses.filter(exp => {
-          if(exp.bankAccountId === account.id) {
-            if(exp.planType === 'occurrence' && exp.occurrences > 0) {
-              return isDueWithin(exp.dueDate, payPeriodStart, periodEnd, currentDaysInMonth);
-            } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
-              return exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
-                isDueWithin(exp.dueDate, payPeriodStart, periodEnd, currentDaysInMonth);
-            } else {
-              return isDueWithin(exp.dueDate, payPeriodStart, periodEnd, currentDaysInMonth);
-            }
-          }
-          return false;
-        });
-
-
         let totalBills = 0;
         billsForAccount.forEach(bill => {
           totalBills += bill.amount;
@@ -1184,18 +1172,50 @@
               totalPeriodic += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
             } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
               if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
-                 isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)
+                 isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)
               ) {
                 totalPeriodic += exp.amount;
               }
             } else {
-              if(isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
+              if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
                 totalPeriodic += exp.amount;
               }
             }
           }
         });
         requiredExpenses[account.id] = totalBills + totalPeriodic;
+      });
+
+      // Compute total expenses for the full pay period (from most recent payday to period end)
+      let totalExpenses = {};
+      bankAccounts.forEach(account => {
+        const billsForAccountTotal = recurringBills.filter(bill => {
+          return bill.bankAccountId === account.id &&
+                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), fullPeriodStart, periodEnd, currentDaysInMonth);
+        });
+        let totalBillsTotal = 0;
+        billsForAccountTotal.forEach(bill => {
+          totalBillsTotal += bill.amount;
+        });
+        let totalPeriodicTotal = 0;
+        oneTimeExpenses.forEach(exp => {
+          if(exp.bankAccountId === account.id) {
+            if(exp.planType === 'occurrence' && exp.occurrences > 0) {
+              totalPeriodicTotal += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
+            } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
+              if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
+                 isDueWithin(exp.dueDate, fullPeriodStart, periodEnd, currentDaysInMonth)
+              ) {
+                totalPeriodicTotal += exp.amount;
+              }
+            } else {
+              if(isDueWithin(exp.dueDate, fullPeriodStart, periodEnd, currentDaysInMonth)) {
+                totalPeriodicTotal += exp.amount;
+              }
+            }
+          }
+        });
+        totalExpenses[account.id] = totalBillsTotal + totalPeriodicTotal;
       });
 
       const resultsDiv = document.getElementById('results');
@@ -1302,24 +1322,19 @@
         resultsDiv.appendChild(accountDiv);
       });
 
-      // Expense Totals: Pay-Period calculations
-      let combinedPayPeriod = 0;
+      // Expense Totals: Full Pay-Period calculations (from fullPeriodStart to periodEnd)
+      let combinedTotalExpenses = 0;
       bankAccounts.forEach(acc => {
-        const totalPayPeriodExpenses = 
-          payPeriodBills.filter(b => b.bankAccountId === acc.id).reduce((sum, b) => sum + b.amount, 0) +
-          payPeriodExpenses.filter(e => e.bankAccountId === acc.id).reduce((sum, e) => sum + e.amount, 0);
-        
-        combinedPayPeriod += totalPayPeriodExpenses;
+        combinedTotalExpenses += totalExpenses[acc.id] || 0;
       });
-
-      let overallSurplus = paycheck - combinedPayPeriod;
+      let overallSurplus = paycheck - combinedTotalExpenses;
       if(balanceTrackingEnabled) {
          document.getElementById('payPeriodCombined').innerHTML =
-            `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}<br>` +
+            `<strong>Total Expenses for This Pay Period:</strong> $${combinedTotalExpenses.toFixed(2)}<br>` +
             `<span style="color:${overallSurplus >= 0 ? 'green' : 'red'};">Estimated Surplus for This Pay Period: $${overallSurplus.toFixed(2)}</span>`;
       } else {
          document.getElementById('payPeriodCombined').innerHTML =
-            `<strong>Total Expenses for This Pay Period:</strong> $${combinedPayPeriod.toFixed(2)}`;
+            `<strong>Total Expenses for This Pay Period:</strong> $${combinedTotalExpenses.toFixed(2)}`;
       }
 
       // Monthly Totals Calculations
