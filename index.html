@@ -728,6 +728,11 @@
      **************************************************************/
     document.getElementById('paydayForm').addEventListener('submit', function(e) {
       e.preventDefault();
+      // Restrict to a single payday type
+      if(paydays.length > 0) {
+        alert("Only one payday type can be selected. Remove the existing one to add a new one.");
+        return;
+      }
       const type = document.getElementById('paydayType').value;
       let day = null;
       if (!type) {
@@ -1018,6 +1023,7 @@
 
     /**************************************************************
      * Helper: Compute next payday difference (in days) from the selected day.
+     * Note: For "1st15", if the cycle date is before 15, we now use 14 as the boundary.
      **************************************************************/
     function computeNextPaydayDiff(selectedDay, daysInMonth) {
       let differences = [];
@@ -1032,8 +1038,7 @@
           }
         } else if(pd.type === '1st15'){
           if(selectedDay < 15){
-            // Changed from 15 - selectedDay to 14 - selectedDay so that the period is 1st-14th
-            diff = 14 - selectedDay;
+            diff = 14 - selectedDay; // changed from 15 - selectedDay
           } else {
             diff = daysInMonth - selectedDay;
           }
@@ -1149,7 +1154,7 @@
       bankAccounts.forEach(account => {
         const billsForAccount = recurringBills.filter(bill => {
           return bill.bankAccountId === account.id &&
-                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), selectedDay, periodEnd, currentDaysInMonth);
+                 isDueWithin(effectiveDueDate(bill.dueDate, currentDaysInMonth), periodStart, periodEnd, currentDaysInMonth);
         });
         let totalBills = 0;
         billsForAccount.forEach(bill => {
@@ -1162,12 +1167,12 @@
               totalPeriodic += (exp.amount * exp.occurrences) / getExpectedPayPeriodsPerYear();
             } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
               if(exp.specificMonths.includes((cycleDate.getMonth()+1).toString()) &&
-                 isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)
+                 isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)
               ) {
                 totalPeriodic += exp.amount;
               }
             } else {
-              if(isDueWithin(exp.dueDate, selectedDay, periodEnd, currentDaysInMonth)) {
+              if(isDueWithin(exp.dueDate, periodStart, periodEnd, currentDaysInMonth)) {
                 totalPeriodic += exp.amount;
               }
             }
@@ -1214,14 +1219,14 @@
         header.textContent = account.name;
         accountDiv.appendChild(header);
 
-        // When tracking is enabled, show deposit and current balance; otherwise, skip them.
+        // When tracking is enabled, show deposit and current balance with updated wording.
         if(balanceTrackingEnabled) {
           const depositPara = document.createElement('p');
-          depositPara.textContent = `Deposit for This Pay Period: $${allocated.toFixed(2)}`;
+          depositPara.textContent = `Initial Deposit for this Pay Period: $${allocated.toFixed(2)}`;
           accountDiv.appendChild(depositPara);
 
           const currentBalancePara = document.createElement('p');
-          currentBalancePara.textContent = `Current Balance for this Bank Account: $${currentBalance.toFixed(2)}`;
+          currentBalancePara.textContent = `Remaining Balance for this Bank Account: $${currentBalance.toFixed(2)}`;
           accountDiv.appendChild(currentBalancePara);
         }
 
@@ -1252,12 +1257,12 @@
         listHeader.textContent = "Upcoming Bills/Expenses:";
         accountDiv.appendChild(listHeader);
         const list = document.createElement('ul');
-        if(upcomingItemsForAccount(account.id, selectedDay, periodEnd, currentDaysInMonth).length === 0) {
+        if(upcomingItemsForAccount(account.id, periodStart, periodEnd, currentDaysInMonth).length === 0) {
           const li = document.createElement('li');
           li.textContent = "None";
           list.appendChild(li);
         } else {
-          upcomingItemsForAccount(account.id, selectedDay, periodEnd, currentDaysInMonth).forEach(item => {
+          upcomingItemsForAccount(account.id, periodStart, periodEnd, currentDaysInMonth).forEach(item => {
             const dueDay = effectiveDueDate(item.dueDate, currentDaysInMonth);
             let itemText = "";
             if(item.type === 'bill') {
@@ -1373,30 +1378,30 @@
     });
 
     // Helper function to get upcoming items for a given bank account
-    function upcomingItemsForAccount(accountId, selectedDay, periodEnd, daysInMonth) {
+    function upcomingItemsForAccount(accountId, periodStart, periodEnd, daysInMonth) {
       let items = [];
       items = items.concat(
-        recurringBills.filter(bill => bill.bankAccountId === accountId && isDueWithin(effectiveDueDate(bill.dueDate, daysInMonth), selectedDay, periodEnd, daysInMonth))
+        recurringBills.filter(bill => bill.bankAccountId === accountId && isDueWithin(effectiveDueDate(bill.dueDate, daysInMonth), periodStart, periodEnd, daysInMonth))
           .map(bill => ({...bill, type: 'bill'}))
       );
       items = items.concat(
         oneTimeExpenses.filter(exp => {
           if(exp.bankAccountId !== accountId) return false;
           if(exp.planType === 'occurrence' && exp.occurrences > 0) {
-            return isDueWithin(exp.dueDate, selectedDay, periodEnd, daysInMonth);
+            return isDueWithin(exp.dueDate, periodStart, periodEnd, daysInMonth);
           } else if(exp.planType === 'specific' && exp.specificMonths.length > 0) {
             return exp.specificMonths.includes((new Date(document.getElementById('cycleDate').value).getMonth()+1).toString()) &&
-                   isDueWithin(exp.dueDate, selectedDay, periodEnd, daysInMonth);
+                   isDueWithin(exp.dueDate, periodStart, periodEnd, daysInMonth);
           } else {
-            return isDueWithin(exp.dueDate, selectedDay, periodEnd, daysInMonth);
+            return isDueWithin(exp.dueDate, periodStart, periodEnd, daysInMonth);
           }
         }).map(exp => ({...exp, type: 'expense'}))
       );
       items.sort((a, b) => {
         const aEff = effectiveDueDate(a.dueDate, daysInMonth);
         const bEff = effectiveDueDate(b.dueDate, daysInMonth);
-        const aDue = aEff < selectedDay ? aEff + daysInMonth : aEff;
-        const bDue = bEff < selectedDay ? bEff + daysInMonth : bEff;
+        const aDue = aEff < periodStart ? aEff + daysInMonth : aEff;
+        const bDue = bEff < periodStart ? bEff + daysInMonth : bEff;
         return aDue - bDue;
       });
       return items;
