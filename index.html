@@ -1,27 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!--
+    The HEAD section contains metadata, title, external resources (like fonts), and all the CSS styles.
+    The CSS styles below use CSS variables for colors and are heavily commented to explain each section.
+  -->
   <meta charset="UTF-8">
   <title>Enhanced Cash Flow Manager</title>
+  <!-- Import Google Fonts for a clean look -->
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
+
   <style>
+    /*-------------------------------------------------------------
+      CSS Variables (Custom Properties)
+      These variables store colors and common values so that they can be reused throughout the CSS.
+    -------------------------------------------------------------*/
     :root {
+      /* Primary colors for main buttons and headings */
       --primary-color: #3498db;
       --primary-dark: #2980b9;
+      /* Accent colors for alternative actions (e.g., editing) */
       --accent-color: #27ae60;
       --accent-dark: #1e8449;
+      /* Error colors used for delete buttons and warnings */
       --error-color: #e74c3c;
       --error-dark: #c0392b;
+      /* General text and background colors */
       --text-color: #333;
       --background-color: #f4f7f6;
+      /* Colors for cards and shadows used in sections */
       --card-bg: #ffffff;
       --card-shadow: rgba(0, 0, 0, 0.1);
     }
+
+    /*-------------------------------------------------------------
+      Resetting default margins and paddings for all elements.
+    -------------------------------------------------------------*/
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
+
+    /*-------------------------------------------------------------
+      Body Styles:
+      Sets the font, background gradient, text color, and padding.
+    -------------------------------------------------------------*/
     body {
       font-family: 'Roboto', sans-serif;
       background: linear-gradient(135deg, var(--background-color) 0%, #ffffff 100%);
@@ -29,11 +53,21 @@
       line-height: 1.6;
       padding: 20px;
     }
+
+    /*-------------------------------------------------------------
+      Container:
+      Centers the content and sets a maximum width.
+    -------------------------------------------------------------*/
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
     }
+
+    /*-------------------------------------------------------------
+      Heading Styles: h1, h2, and h3.
+      h1 is the main title; h2 is used for section titles; h3 is used for subsections.
+    -------------------------------------------------------------*/
     h1 {
       font-size: 2.5em;
       text-align: center;
@@ -50,6 +84,11 @@
       font-size: 1.4em;
       margin-bottom: 15px;
     }
+
+    /*-------------------------------------------------------------
+      Section Boxes:
+      Each section (like Paydays, Bank Accounts, etc.) appears as a card with padding, rounded corners, and a shadow.
+    -------------------------------------------------------------*/
     section {
       background: var(--card-bg);
       border-radius: 12px;
@@ -57,6 +96,12 @@
       margin-bottom: 20px;
       box-shadow: 0 4px 6px var(--card-shadow);
     }
+
+    /*-------------------------------------------------------------
+      Form Elements:
+      Input, select, and button elements inside forms.
+      They are styled for consistency and include focus effects.
+    -------------------------------------------------------------*/
     form input, form select, form button {
       display: block;
       width: 100%;
@@ -86,6 +131,11 @@
     form button:hover {
       background-color: var(--primary-dark);
     }
+
+    /*-------------------------------------------------------------
+      List Styling:
+      Removes default list style and adds a background and spacing to list items.
+    -------------------------------------------------------------*/
     ul {
       list-style: none;
       padding: 0;
@@ -103,6 +153,11 @@
       flex: 1;
       margin-right: 10px;
     }
+
+    /*-------------------------------------------------------------
+      Button Styles for delete and edit actions.
+      These include color changes on hover.
+    -------------------------------------------------------------*/
     .delete-btn {
       background-color: var(--error-color);
       border: none;
@@ -128,6 +183,11 @@
     .edit-btn:hover {
       background-color: var(--accent-dark);
     }
+
+    /*-------------------------------------------------------------
+      Table Styles:
+      Used for displaying the sample CSV import table.
+    -------------------------------------------------------------*/
     table {
       width: 100%;
       border-collapse: collapse;
@@ -142,6 +202,11 @@
       background-color: var(--primary-color);
       color: #fff;
     }
+
+    /*-------------------------------------------------------------
+      Expense Totals Section:
+      Styles the section that shows expense totals, including borders and background color.
+    -------------------------------------------------------------*/
     #expense-totals {
       border: 2px solid var(--primary-color);
       padding: 20px;
@@ -162,6 +227,11 @@
       margin: 10px 0;
       padding-left: 20px;
     }
+
+    /*-------------------------------------------------------------
+      Balance Tracking Toggle:
+      Styles the container for the bank account balance tracking option.
+    -------------------------------------------------------------*/
     #balanceTrackingToggleContainer {
       margin-bottom: 15px;
     }
@@ -169,7 +239,11 @@
       font-size: 0.9em;
       color: #555;
     }
-    /* New container for Expected Paycheck Amount */
+
+    /*-------------------------------------------------------------
+      Expected Paycheck Amount Section:
+      A bordered and padded section for entering the expected paycheck.
+    -------------------------------------------------------------*/
     .paycheck-amount-section {
       border: 2px solid var(--primary-color);
       background-color: #f7faff;
@@ -180,7 +254,11 @@
     .paycheck-amount-section h2 {
       margin-bottom: 15px;
     }
-    /* Expense Plan Type container */
+
+    /*-------------------------------------------------------------
+      Expense Plan Type Section:
+      Provides options for how to plan for periodic expenses.
+    -------------------------------------------------------------*/
     .expense-plan-type {
       border: 1px solid #ccc;
       background-color: #f7faff;
@@ -200,6 +278,11 @@
       font-size: 0.9em;
       color: #555;
     }
+
+    /*-------------------------------------------------------------
+      Distribution Section (for paycheck allocation)
+      Contains inputs and dropdowns for different allocation methods.
+    -------------------------------------------------------------*/
     #distribution-section {
       margin-top: 20px;
       padding: 20px;
@@ -215,6 +298,10 @@
       font-size: 1em;
       max-width: 400px;
     }
+
+    /*-------------------------------------------------------------
+      Additional Styles for Bank Accounts Section
+    -------------------------------------------------------------*/
     #bank-accounts {
       position: relative;
     }
@@ -255,25 +342,33 @@
     .hidden {
       display: none;
     }
-    /* =========================
-   Fix for Radio Button Alignment
-   ========================= */
+
+    /*-------------------------------------------------------------
+      Fix for Radio Button Alignment in Expense Plan Type Section
+    -------------------------------------------------------------*/
     .expense-plan-type label {
       display: inline-flex;
       align-items: center;
-      margin-bottom: 0.5em; /* Optional: space between label groups */
+      margin-bottom: 0.5em;
     }
     .expense-plan-type input[type="radio"] {
-      margin-right: 8px;  /* Space between the radio and the text */
+      margin-right: 8px;
       vertical-align: middle;
     }
   </style>
 </head>
 <body>
+  <!--
+    The main container holds all sections of the Enhanced Cash Flow Manager.
+  -->
   <div class="container">
     <h1>Enhanced Cash Flow Manager</h1>
 
-    <!-- Paydays Section (for non‑tracking scenarios) -->
+    <!-- =====================================================
+         Section: Paydays
+         This section allows the user to add a payday.
+         For a "Specific Day" type, an extra input field appears.
+    ===================================================== -->
     <section id="paydays">
       <h2>Paydays</h2>
       <form id="paydayForm">
@@ -286,17 +381,22 @@
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
         </select>
-        <!-- For "specific" type -->
+        <!-- This input appears only when "Specific Day" is selected -->
         <div id="specificDayInput" class="hidden">
           <label for="specificDay">Day of Month (1–31):</label>
           <input type="number" id="specificDay" placeholder="e.g., 15" min="1" max="31">
         </div>
         <button type="submit">Add Payday</button>
       </form>
+      <!-- List of added paydays will appear here -->
       <ul id="paydayList"></ul>
     </section>
 
-    <!-- CSV Import Section for Recurring Bills -->
+    <!-- =====================================================
+         Section: CSV Import for Recurring Bills
+         Users can import recurring bills via a CSV file.
+         The CSV must include columns: Bill Name, Bill Amount, Due Date, Bank Account.
+    ===================================================== -->
     <section id="csv-import">
       <h2>CSV Import for Recurring Bills</h2>
       <p>
@@ -330,7 +430,12 @@
       <input type="file" id="recurringCSV" accept=".csv">
     </section>
 
-    <!-- Bank Accounts Section -->
+    <!-- =====================================================
+         Section: Bank Accounts
+         Allows adding and listing bank accounts.
+         Contains a toggle to enable bank balance tracking.
+         If enabled, additional fields for paycheck distribution appear.
+    ===================================================== -->
     <section id="bank-accounts">
       <h2>Bank Accounts</h2>
       <div id="balanceTrackingToggleContainer">
@@ -338,42 +443,50 @@
           <input type="checkbox" id="balanceTrackingToggle">
           Track Bank Account Balances?
         </label>
-        <p>When enabled, the system calculates your remaining cash for the pay period based on your current balance. If you also enter your paycheck amount, the "Expense Totals" (at the bottom) will show your remaining balance for each account.</p>
+        <p>When enabled, the system will use the expected paycheck allocations (and ignore your current balance) to determine your surplus.</p>
       </div>
       <form id="bankAccountForm">
         <input type="text" id="bankName" placeholder="Bank Account Name" required>
         <input type="number" id="bankBalance" placeholder="Current Bank Balance (optional)" step="0.01">
         <button type="submit">Add Bank Account</button>
       </form>
+      <!-- List of added bank accounts -->
       <ul id="bankAccountList"></ul>
-      <!-- Dynamic section for balance tracking (appears only if tracking is enabled) -->
+      <!-- Dynamic section for balance tracking (appears only if enabled) -->
       <div id="balanceTrackingDynamic" class="hidden">
-       <form id="paycheckForm"> 
-        <div id="expectedPaycheckSection" class="paycheck-amount-section">
-          <h2>Expected Paycheck Amount (After-Tax)</h2>
-          <input type="number" id="expectedPaycheck" placeholder="e.g., 2000" step="0.01">
-        </div>
-        <div id="distribution-section">
-          <h2>Paycheck Distribution Method</h2>
-          <select id="distributionMethod">
-            <option value="equal">Equal Split</option>
-            <option value="custom">Custom Allocation</option>
-            <option value="single">Single Account</option>
-            <option value="proportional">Proportional to Expenses</option>
-          </select>
-          <div id="customAllocationFields" class="hidden"></div>
-          <div id="singleAccountSelectorContainer" class="hidden">
-            <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
-            <select id="singleAccountSelector">
-              <!-- Options will be populated with bank accounts -->
-            </select>
+        <form id="paycheckForm"> 
+          <!-- Section to enter the expected paycheck amount -->
+          <div id="expectedPaycheckSection" class="paycheck-amount-section">
+            <h2>Expected Paycheck Amount (After-Tax)</h2>
+            <input type="number" id="expectedPaycheck" placeholder="e.g., 2000" step="0.01">
           </div>
-        </div>
-       </form>
+          <!-- Section to choose how to distribute the paycheck -->
+          <div id="distribution-section">
+            <h2>Paycheck Distribution Method</h2>
+            <select id="distributionMethod">
+              <option value="equal">Equal Split</option>
+              <option value="custom">Custom Allocation</option>
+              <option value="single">Single Account</option>
+              <option value="proportional">Proportional to Expenses</option>
+            </select>
+            <!-- Fields for custom allocation; these are hidden until needed -->
+            <div id="customAllocationFields" class="hidden"></div>
+            <!-- Single account selector (if Single Account method is chosen) -->
+            <div id="singleAccountSelectorContainer" class="hidden">
+              <label for="singleAccountSelector">Select Account for Full Paycheck:</label>
+              <select id="singleAccountSelector">
+                <!-- Options will be added dynamically -->
+              </select>
+            </div>
+          </div>
+        </form>
       </div>
     </section>
 
-    <!-- Recurring Bills Section -->
+    <!-- =====================================================
+         Section: Recurring Bills
+         Form to add a recurring bill (regular monthly bill).
+    ===================================================== -->
     <section id="recurring-bills">
       <h2>Recurring Bills</h2>
       <form id="billForm">
@@ -385,10 +498,15 @@
         </select>
         <button type="submit">Add Recurring Bill</button>
       </form>
+      <!-- List of recurring bills -->
       <ul id="billList"></ul>
     </section>
 
-    <!-- Periodic Expenses Section -->
+    <!-- =====================================================
+         Section: Periodic Expenses
+         Form to add one-time or periodic expenses.
+         Users choose between planning by "Occurrences Per Year" or "Specific Months".
+    ===================================================== -->
     <section id="oneTime-expenses">
       <h2>Periodic Expenses</h2>
       <p>
@@ -425,9 +543,11 @@
             </p>
           </div>
         </div>
+        <!-- Input field for "Occurrences Per Year" method -->
         <div id="occurrenceSection">
           <input type="number" id="expenseOccurrences" placeholder="Occurrences Per Year (e.g., 2)" min="0">
         </div>
+        <!-- Section for choosing specific months (hidden by default) -->
         <div id="specificMonthsSection" class="hidden">
           <label for="expenseMonthSelect">Select Month:</label>
           <select id="expenseMonthSelect">
@@ -445,14 +565,19 @@
             <option value="12">December</option>
           </select>
           <button type="button" id="addExpenseMonthBtn">Add Month</button>
+          <!-- List to display the months that have been added -->
           <ul id="expenseMonthsList"></ul>
         </div>
         <button type="submit">Add Periodic Expense</button>
       </form>
+      <!-- List of added periodic expenses -->
       <ul id="expenseList"></ul>
     </section>
 
-    <!-- Calculate Required Balances Section -->
+    <!-- =====================================================
+         Section: Calculate Required Balances
+         The user selects a cycle date and clicks "Calculate" to compute required balances.
+    ===================================================== -->
     <section id="calculation">
       <h2>Calculate Required Balances</h2>
       <label for="cycleDate">Select Cycle Date:</label>
@@ -460,13 +585,19 @@
       <button id="calculateButton">Calculate</button>
     </section>
 
-    <!-- Required Balances Summary Section -->
+    <!-- =====================================================
+         Section: Required Balances Summary
+         Displays the calculated summary including deposits, expenses, surplus/deficit, and daily spending budgets.
+    ===================================================== -->
     <section id="output">
       <h2>Required Balances Summary</h2>
       <div id="results"></div>
     </section>
 
-    <!-- Expense Totals Section -->
+    <!-- =====================================================
+         Section: Expense Totals
+         Shows combined expense totals for the pay period and monthly totals with breakdowns by bank account.
+    ===================================================== -->
     <section id="expense-totals">
       <h2>Expense Totals</h2>
       <div id="payPeriodTotals">
@@ -483,9 +614,15 @@
     </section>
   </div>
 
+  <!--
+    JavaScript Section:
+    Contains all the logic to handle user interactions, data storage, calculations, and dynamic UI updates.
+  -->
   <script>
     /**************************************************************
-     * Global variables and data storage.
+     * Global Variables and Data Storage:
+     * These variables and arrays hold the state of the application,
+     * such as bank accounts, bills, expenses, paydays, etc.
      **************************************************************/
     let bankAccounts = [];
     let recurringBills = [];
@@ -493,10 +630,11 @@
     let paydays = [];
     let balanceTrackingEnabled = false;
     let tempExpenseMonths = [];
-    let lockedDistribution = {}; // Holds locked custom distribution values
+    let lockedDistribution = {}; // Holds locked custom distribution values for paycheck allocations
 
     /**************************************************************
-     * Helper: Get days in month based on the selected cycle date.
+     * Helper Function: getCycleDaysInMonth
+     * Returns the number of days in the month based on the selected cycle date.
      **************************************************************/
     function getCycleDaysInMonth() {
       const cycleDateVal = document.getElementById('cycleDate').value;
@@ -504,17 +642,19 @@
         let dt = new Date(cycleDateVal);
         return new Date(dt.getFullYear(), dt.getMonth()+1, 0).getDate();
       }
-      return 31;
+      return 31; // Default if no date is selected
     }
 
     /**************************************************************
-     * Helper: Check if a due date is within the pay period window,
-     * accounting for wrap-around if periodEnd < periodStart.
+     * Helper Function: isDueWithin
+     * Checks if a given due date is within the specified pay period.
+     * Accounts for pay periods that may span the end of a month.
      **************************************************************/
     function isDueWithin(dueDate, periodStart, periodEnd, daysInMonth) {
       if (periodStart <= periodEnd) {
         return (dueDate >= periodStart && dueDate <= periodEnd);
       } else {
+        // When the period spans to the next month
         return (
           (dueDate >= periodStart && dueDate <= daysInMonth) ||
           (dueDate >= 1 && dueDate <= periodEnd)
@@ -523,15 +663,16 @@
     }
 
     /**************************************************************
-     * Helper: For bills due on 29-31 in a month with fewer days,
-     * return the effective due date.
+     * Helper Function: effectiveDueDate
+     * Adjusts due dates that exceed the number of days in the month.
      **************************************************************/
     function effectiveDueDate(dueDate, daysInMonth) {
       return (dueDate > daysInMonth) ? daysInMonth : dueDate;
     }
 
     /**************************************************************
-     * Utility: Update bank account dropdowns in bills and expenses.
+     * Utility Function: updateBankAccountDropdowns
+     * Updates the dropdown menus in bills and expenses forms with current bank accounts.
      **************************************************************/
     function updateBankAccountDropdowns() {
       const billSelect = document.getElementById('billBankAccount');
@@ -551,7 +692,8 @@
     }
 
     /**************************************************************
-     * Update distribution section options.
+     * Function: updateDistributionSection
+     * Refreshes the paycheck distribution options based on the current bank accounts.
      **************************************************************/
     function updateDistributionSection() {
       const singleAccountSelector = document.getElementById('singleAccountSelector');
@@ -568,7 +710,9 @@
     }
 
     /**************************************************************
-     * Update custom allocation fields for each bank account.
+     * Function: updateCustomAllocationFields
+     * Dynamically creates input fields for custom allocation amounts
+     * for each bank account.
      **************************************************************/
     function updateCustomAllocationFields() {
       const customAllocDiv = document.getElementById('customAllocationFields');
@@ -581,10 +725,12 @@
         const inputElem = div.querySelector('input');
         inputElem.addEventListener('input', updateCustomAllocationCounter);
       });
+      // Add a counter to show remaining amount to be allocated
       const counterDiv = document.createElement('div');
       counterDiv.id = "customAllocationCounter";
       counterDiv.textContent = "Remaining to distribute: $0";
       customAllocDiv.appendChild(counterDiv);
+      // Add a button to lock in the custom distribution if it doesn't already exist
       if(!document.getElementById('addDistributionBtn')) {
         const addBtn = document.createElement('button');
         addBtn.type = "button";
@@ -601,6 +747,10 @@
       customAllocDiv.classList.remove('hidden');
     }
 
+    /**************************************************************
+     * Function: updateCustomAllocationCounter
+     * Calculates the remaining amount to allocate based on user inputs.
+     **************************************************************/
     function updateCustomAllocationCounter() {
       let target = balanceTrackingEnabled 
                    ? parseFloat(document.getElementById('expectedPaycheck').value) 
@@ -620,7 +770,8 @@
     }
 
     /**************************************************************
-     * Lock (Add) the custom distribution.
+     * Function: lockCustomDistribution
+     * Locks in the custom allocation values after verifying they sum correctly.
      **************************************************************/
     function lockCustomDistribution() {
       let target = balanceTrackingEnabled 
@@ -639,6 +790,7 @@
         return;
       }
       lockedDistribution = allocations;
+      // Disable inputs once distribution is locked
       bankAccounts.forEach(account => {
         let input = document.getElementById('customAlloc_' + account.id);
         if(input) {
@@ -648,6 +800,10 @@
       updateLockedDistributionDisplay();
     }
 
+    /**************************************************************
+     * Function: updateLockedDistributionDisplay
+     * Shows the locked allocation values and allows removal.
+     **************************************************************/
     function updateLockedDistributionDisplay() {
       const container = document.getElementById('lockedDistributionContainer');
       container.innerHTML = "";
@@ -676,7 +832,7 @@
     }
 
     /**************************************************************
-     * Show/hide the specific day input for paydays.
+     * Event Listener: Toggle display of "Specific Day" input for paydays.
      **************************************************************/
     document.getElementById('paydayType').addEventListener('change', function() {
       const specificInput = document.getElementById('specificDayInput');
@@ -688,7 +844,8 @@
     });
 
     /**************************************************************
-     * Toggle: Enable or disable balance tracking.
+     * Event Listener: Toggle bank balance tracking.
+     * When enabled, extra fields for paycheck tracking are shown.
      **************************************************************/
     document.getElementById('balanceTrackingToggle').addEventListener('change', function() {
       balanceTrackingEnabled = this.checked;
@@ -702,8 +859,8 @@
     });
 
     /**************************************************************
-     * Distribution Method Change: Show/hide custom allocation or
-     * single account selector.
+     * Event Listener: Change distribution method.
+     * Updates the UI to show/hide custom allocation or single account selector.
      **************************************************************/
     document.getElementById('distributionMethod').addEventListener('change', function() {
       const method = this.value;
@@ -724,11 +881,11 @@
     });
 
     /**************************************************************
-     * Add a new Payday.
+     * Event Listener: Add a new payday.
+     * Restricts the user to one payday entry.
      **************************************************************/
     document.getElementById('paydayForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      // Restrict to a single payday type
       if(paydays.length > 0) {
         alert("Only one payday type can be selected. Remove the existing one to add a new one.");
         return;
@@ -755,7 +912,8 @@
     });
 
     /**************************************************************
-     * Update the Payday list UI.
+     * Function: updatePaydayList
+     * Updates the UI list of paydays.
      **************************************************************/
     function updatePaydayList() {
       const paydayList = document.getElementById('paydayList');
@@ -784,7 +942,8 @@
     }
 
     /**************************************************************
-     * Bank Account: Add a new bank account.
+     * Event Listener: Add a new bank account.
+     * Saves the bank account name and optionally its balance.
      **************************************************************/
     document.getElementById('bankAccountForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -801,7 +960,8 @@
     });
 
     /**************************************************************
-     * Update Bank Accounts list UI.
+     * Function: updateBankAccountList
+     * Updates the UI list of bank accounts.
      **************************************************************/
     function updateBankAccountList() {
       const bankList = document.getElementById('bankAccountList');
@@ -842,7 +1002,8 @@
     }
 
     /**************************************************************
-     * Recurring Bill: Add a new recurring bill.
+     * Event Listener: Add a new recurring bill.
+     * Collects details and adds the bill to the recurringBills array.
      **************************************************************/
     document.getElementById('billForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -864,7 +1025,8 @@
     });
 
     /**************************************************************
-     * Update Recurring Bills list UI.
+     * Function: updateBillList
+     * Refreshes the list of recurring bills displayed in the UI.
      **************************************************************/
     function updateBillList() {
       const billList = document.getElementById('billList');
@@ -889,7 +1051,8 @@
     }
 
     /**************************************************************
-     * Expense Plan Type toggle.
+     * Event Listener: Toggle Expense Plan Type.
+     * Shows the appropriate input fields based on the chosen plan.
      **************************************************************/
     const expensePlanTypeRadios = document.getElementsByName('expensePlanType');
     expensePlanTypeRadios.forEach(radio => {
@@ -905,7 +1068,7 @@
     });
 
     /**************************************************************
-     * Specific Months: Add month selection for periodic expense.
+     * Event Listener: Add a Selected Month for a Periodic Expense.
      **************************************************************/
     document.getElementById('addExpenseMonthBtn').addEventListener('click', function() {
       const monthSelect = document.getElementById('expenseMonthSelect');
@@ -916,6 +1079,10 @@
       }
     });
 
+    /**************************************************************
+     * Function: updateExpenseMonthsList
+     * Updates the list of selected months for the "Specific Months" option.
+     **************************************************************/
     function updateExpenseMonthsList() {
       const list = document.getElementById('expenseMonthsList');
       list.innerHTML = "";
@@ -934,13 +1101,18 @@
       });
     }
 
+    /**************************************************************
+     * Helper Function: monthName
+     * Returns the full name of the month based on its numeric value.
+     **************************************************************/
     function monthName(m) {
       const names = ["January","February","March","April","May","June","July","August","September","October","November","December"];
       return names[m - 1] || "";
     }
 
     /**************************************************************
-     * Periodic Expense: Add a new periodic expense.
+     * Event Listener: Add a new Periodic Expense.
+     * Collects all data for the expense and adds it to the oneTimeExpenses array.
      **************************************************************/
     document.getElementById('expenseForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -976,7 +1148,8 @@
     });
 
     /**************************************************************
-     * Update Periodic Expenses list UI.
+     * Function: updateExpenseList
+     * Refreshes the list of periodic expenses displayed in the UI.
      **************************************************************/
     function updateExpenseList() {
       const expenseList = document.getElementById('expenseList');
@@ -1007,7 +1180,9 @@
     }
 
     /**************************************************************
-     * Helper: Compute expected pay periods per year based on paydays.
+     * Helper Function: getExpectedPayPeriodsPerYear
+     * Returns an estimate of how many pay periods occur in a year
+     * based on the type of payday set.
      **************************************************************/
     function getExpectedPayPeriodsPerYear() {
       let periods = 12;
@@ -1022,8 +1197,8 @@
     }
 
     /**************************************************************
-     * Helper: Compute next payday difference (in days) from the selected day.
-     * Note: For "1st15", if the cycle date is before 15, we now use 14 as the boundary.
+     * Helper Function: computeNextPaydayDiff
+     * Calculates how many days until the next payday from the selected day.
      **************************************************************/
     function computeNextPaydayDiff(selectedDay, daysInMonth) {
       let differences = [];
@@ -1038,7 +1213,7 @@
           }
         } else if(pd.type === '1st15'){
           if(selectedDay < 15){
-            diff = 14 - selectedDay; // changed from 15 - selectedDay
+            diff = 14 - selectedDay;
           } else {
             diff = daysInMonth - selectedDay;
           }
@@ -1060,7 +1235,8 @@
     }
 
     /**************************************************************
-     * Helper: Get the most recent payday day (needed by the calculation).
+     * Helper Function: getMostRecentPaydayDay
+     * Determines the most recent payday (or effective payday) relative to the selected day.
      **************************************************************/
     function getMostRecentPaydayDay(selectedDay, daysInMonth) {
       let recentDay = -1;
@@ -1095,7 +1271,7 @@
           } else if(pd.type === 'daily'){
             effDay = selectedDay;
           } else if(pd.type === 'weekly'){
-            effDay = 1; 
+            effDay = 1;
           } else if(pd.type === 'monthly'){
             effDay = daysInMonth;
           }
@@ -1107,8 +1283,8 @@
     }
 
     /**************************************************************
-     * Calculation and Totals:
-     * (Updated to compute surpluses correctly as per user feedback)
+     * Calculation Function:
+     * Handles the main calculation of required balances, expenses, and paycheck allocations.
      **************************************************************/
     document.getElementById('calculateButton').addEventListener('click', function() {
       const cycleDateStr = document.getElementById('cycleDate').value;
@@ -1120,7 +1296,7 @@
       const selectedDay = cycleDate.getDate();
       const currentDaysInMonth = new Date(cycleDate.getFullYear(), cycleDate.getMonth()+1, 0).getDate();
 
-      // Compute full pay period start using the most recent payday
+      // Determine the start of the full pay period using the most recent payday
       const fullPeriodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
 
       if (paydays.length === 0 && !balanceTrackingEnabled) {
@@ -1128,11 +1304,10 @@
         return;
       }
 
-      // For remaining expenses, we use the cycle date as the start (i.e. expenses remaining from now to period end)
+      // Define the current pay period from the selected day to the next payday
       const periodStart = selectedDay;
       const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
       let periodEnd = selectedDay + nextDiff;
-      // Compute full period length from the full period start (most recent payday) to periodEnd
       let fullPeriodLength = (periodEnd >= fullPeriodStart)
         ? (periodEnd - fullPeriodStart + 1)
         : ((currentDaysInMonth - fullPeriodStart + 1) + periodEnd);
@@ -1154,7 +1329,7 @@
         return;
       }
 
-      // Compute remaining expenses (from cycle date to period end) per bank account
+      // Calculate required expenses (from the cycle date to period end) for each bank account
       let requiredExpenses = {};
       bankAccounts.forEach(account => {
         const billsForAccount = recurringBills.filter(bill => {
@@ -1186,7 +1361,7 @@
         requiredExpenses[account.id] = totalBills + totalPeriodic;
       });
 
-      // Compute total expenses for the full pay period (from most recent payday to period end)
+      // Calculate total expenses for the full pay period (from the most recent payday)
       let totalExpenses = {};
       bankAccounts.forEach(account => {
         const billsForAccountTotal = recurringBills.filter(bill => {
@@ -1221,7 +1396,7 @@
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
 
-      // For each bank account, calculate values for the Required Balances Summary
+      // For each bank account, build and display a summary of required balances and upcoming items
       let overallAllocated = 0;
       bankAccounts.forEach(account => {
         let allocated = 0;
@@ -1244,19 +1419,18 @@
         }
         overallAllocated += allocated;
         const totalRequired = requiredExpenses[account.id] || 0;
-        // Use the CURRENT bank balance for surplus calculation (assumes user has been paid)
+        // Calculate surplus (or deficit) based on the current bank balance
         const currentBalance = (account.balance !== null && !isNaN(account.balance)) ? account.balance : 0;
         const surplus = currentBalance - totalRequired;
         const dailySpendBudget = remainingDays > 0 ? surplus / remainingDays : surplus;
 
-        // Build the Required Balances Summary in the specified order:
+        // Create a summary block for the bank account
         const accountDiv = document.createElement('div');
         accountDiv.classList.add('account-summary');
         const header = document.createElement('h3');
         header.textContent = account.name;
         accountDiv.appendChild(header);
 
-        // When tracking is enabled, show deposit and current balance with updated wording.
         if(balanceTrackingEnabled) {
           const depositPara = document.createElement('p');
           depositPara.textContent = `Initial Deposit for this Pay Period: $${allocated.toFixed(2)}`;
@@ -1267,12 +1441,10 @@
           accountDiv.appendChild(currentBalancePara);
         }
 
-        // Always show the remaining expenses.
         const requiredPara = document.createElement('p');
         requiredPara.textContent = `Remaining Expenses for This Pay Period for this account: $${totalRequired.toFixed(2)}`;
         accountDiv.appendChild(requiredPara);
 
-        // Only if tracking is enabled, show surplus/deficit and daily spend budget.
         if(balanceTrackingEnabled) {
           const surplusPara = document.createElement('p');
           if(surplus >= 0) {
@@ -1289,7 +1461,7 @@
           accountDiv.appendChild(dailyPara);
         }
 
-        // List upcoming items for this account
+        // Display upcoming bills/expenses for this account
         const listHeader = document.createElement('p');
         listHeader.textContent = "Upcoming Bills/Expenses:";
         accountDiv.appendChild(listHeader);
@@ -1322,7 +1494,7 @@
         resultsDiv.appendChild(accountDiv);
       });
 
-      // Expense Totals: Full Pay-Period calculations (from fullPeriodStart to periodEnd)
+      // Calculate and display total expenses for the pay period
       let combinedTotalExpenses = 0;
       bankAccounts.forEach(acc => {
         combinedTotalExpenses += totalExpenses[acc.id] || 0;
@@ -1337,7 +1509,7 @@
             `<strong>Total Expenses for This Pay Period:</strong> $${combinedTotalExpenses.toFixed(2)}`;
       }
 
-      // Monthly Totals Calculations
+      // Monthly Totals Calculation:
       let monthlyTotals = {};
       bankAccounts.forEach(acc => {
         monthlyTotals[acc.id] = 0;
@@ -1414,7 +1586,10 @@
       document.getElementById('monthlyByBank').innerHTML = monthlyBankList;
     });
 
-    // Helper function to get upcoming items for a given bank account
+    /**************************************************************
+     * Helper Function: upcomingItemsForAccount
+     * Returns a sorted list of upcoming bills and expenses for a specific bank account.
+     **************************************************************/
     function upcomingItemsForAccount(accountId, periodStart, periodEnd, daysInMonth) {
       let items = [];
       items = items.concat(
@@ -1434,6 +1609,7 @@
           }
         }).map(exp => ({...exp, type: 'expense'}))
       );
+      // Sort items based on their effective due date (considering wrap-around)
       items.sort((a, b) => {
         const aEff = effectiveDueDate(a.dueDate, daysInMonth);
         const bEff = effectiveDueDate(b.dueDate, daysInMonth);
@@ -1445,7 +1621,8 @@
     }
 
     /**************************************************************
-     * CSV Import for Recurring Bills.
+     * CSV Import Functionality for Recurring Bills.
+     * Reads a CSV file and parses the data to add recurring bills.
      **************************************************************/
     document.getElementById('recurringCSV').addEventListener('change', function(e) {
       const file = e.target.files[0];
@@ -1529,4 +1706,4 @@
     });
   </script>
 </body>
-</html>
+</html> 
