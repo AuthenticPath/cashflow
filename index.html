@@ -1032,7 +1032,8 @@
           }
         } else if(pd.type === '1st15'){
           if(selectedDay < 15){
-            diff = 15 - selectedDay;
+            // Changed from 15 - selectedDay to 14 - selectedDay so that the period is 1st-14th
+            diff = 14 - selectedDay;
           } else {
             diff = daysInMonth - selectedDay;
           }
