@@ -812,7 +812,7 @@
         li.innerHTML = `<span class="item-text">${account.name} - Balance: ${balText}</span>`;
         if(balanceTrackingEnabled) {
           const editBtn = document.createElement('button');
-          editBtn.textContent = "Edit";
+          editBtn.textContent = "Edit Balance";
           editBtn.classList.add('edit-btn');
           editBtn.addEventListener('click', function() {
             const newBalance = prompt("Enter new current balance for " + account.name, account.balance);
