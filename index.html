@@ -86,6 +86,58 @@
     }
 
     /*-------------------------------------------------------------
+      Intro Text and Instructions Button
+    -------------------------------------------------------------*/
+    #intro-text {
+      font-size: 1.1em;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #instructionsBtn {
+      display: block;
+      margin: 0 auto 40px auto;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    #instructionsBtn:hover {
+      background-color: var(--primary-dark);
+    }
+
+    /*-------------------------------------------------------------
+      Dialog Styles for Instructions Modal
+    -------------------------------------------------------------*/
+    dialog {
+      width: 80%;
+      max-width: 800px;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px var(--card-shadow);
+      padding: 20px;
+    }
+    dialog::backdrop {
+      background: rgba(0,0,0,0.5);
+    }
+    #instructionsDialog button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    #instructionsDialog button:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    /*-------------------------------------------------------------
       Section Boxes:
       Each section (like Paydays, Bank Accounts, etc.) appears as a card with padding, rounded corners, and a shadow.
     -------------------------------------------------------------*/
@@ -363,6 +415,12 @@
   -->
   <div class="container">
     <h1>Enhanced Cash Flow Manager</h1>
+    <!-- Intro Text -->
+    <p id="intro-text">
+      With this Enhanced Cash Flow Manager, you can easily track your income, expenses, and bank balances, giving you full visibility and clarity around your finances. To learn more, click the "Instructions" button below.
+    </p>
+    <!-- Instructions Button -->
+    <button id="instructionsBtn">Instructions</button>
 
     <!-- =====================================================
          Section: Paydays
@@ -443,7 +501,8 @@
           <input type="checkbox" id="balanceTrackingToggle">
           Track Bank Account Balances?
         </label>
-        <p>When enabled, the system calculates your remaining cash for the pay period based on your current balance. If you also enter your paycheck amount, the "Expense Totals" (at the bottom) will show your remaining balance for each account.</p>      </div>
+        <p>When enabled, the system calculates your remaining cash for the pay period based on your current balance. If you also enter your paycheck amount, the "Expense Totals" (at the bottom) will show your remaining balance for each account.</p>      
+      </div>
       <form id="bankAccountForm">
         <input type="text" id="bankName" placeholder="Bank Account Name" required>
         <input type="number" id="bankBalance" placeholder="Current Bank Balance (optional)" step="0.01">
@@ -612,6 +671,84 @@
       </div>
     </section>
   </div>
+
+  <!-- Instructions Dialog -->
+<dialog id="instructionsDialog">
+  <div id="instructionsContent">
+    <p>This guide will walk you through the key features and show you how to make the most of your tracker.</p>
+    <hr>
+    <h2>Getting Started</h2>
+    <h3>1. Add Your Paydays</h3>
+    <p>Your cash flow starts with knowing when you get paid.</p>
+    <p>Click the <strong>Paydays</strong> section.</p>
+    <p>Select your <strong>pay schedule</strong> (e.g., weekly, bi-monthly, or a specific date).</p>
+    <p>If you pick <strong>Specific Day</strong>, enter the exact day of the month.</p>
+    <p>Click <strong>Add Payday</strong> to save.</p>
+    <p><strong>Why it matters:</strong> This helps predict when money comes in, so you can plan expenses accordingly.</p>
+    <hr>
+    <h3>2. Enter Your Bank Accounts</h3>
+    <p>Keep track of where your money is stored!</p>
+    <p>Go to the <strong>Bank Accounts</strong> section.</p>
+    <p>Enter the <strong>name</strong> of your account (e.g., "Main Checking").</p>
+    <p>(Optional) Add your current <strong>balance</strong> if you want to track it.</p>
+    <p>Click <strong>Add Bank Account</strong> to save.</p>
+    <p><strong>Why it matters:</strong> Knowing your balances ensures you never overdraw your accounts.</p>
+    <hr>
+    <h3>3. Import or Add Recurring Bills</h3>
+    <p>Predictable expenses like rent, utilities, and subscriptions? Add them here!</p>
+    <p>Use the <strong>CSV Import</strong> feature to upload a list of recurring bills OR</p>
+    <p>Manually enter each bill:</p>
+    <p>Name (e.g., "Rent")</p>
+    <p>Amount (e.g., "$1200")</p>
+    <p>Due date (Day of the month)</p>
+    <p>The <strong>bank account</strong> that pays the bill.</p>
+    <p>Click <strong>Add Recurring Bill</strong> to save.</p>
+    <p><strong>Why it matters:</strong> This helps you plan ahead and avoid missing payments.</p>
+    <hr>
+    <h3>4. Track Periodic Expenses</h3>
+    <p>Some expenses don’t happen every month, but they still need to be planned for!</p>
+    <p>Enter periodic expenses like <strong>car insurance, holiday shopping, or annual fees.</strong></p>
+    <p>Choose between:</p>
+    <p><strong>Occurrences per year</strong> (e.g., car insurance paid twice a year) OR</p>
+    <p><strong>Specific months</strong> (e.g., vacation savings every June & December).</p>
+    <p>Click <strong>Add Periodic Expense</strong> to save.</p>
+    <p><strong>Why it matters:</strong> Planning ahead prevents surprise expenses from wrecking your budget.</p>
+    <hr>
+    <h3>5. Choose Your Paycheck Distribution Plan</h3>
+    <p>Decide how your paycheck gets split across your accounts!</p>
+    <p>Choose a <strong>distribution method:</strong></p>
+    <p><strong>Equal Split</strong> (divides paycheck evenly across accounts).</p>
+    <p><strong>Custom Allocation</strong> (set specific amounts for each account).</p>
+    <p><strong>Single Account</strong> (entire paycheck to one account).</p>
+    <p><strong>Proportional to Expenses</strong> (allocates based on bill amounts).</p>
+    <p>If using <strong>Custom Allocation</strong>, enter amounts and <strong>Lock Custom Distribution</strong>.</p>
+    <p><strong>Why it matters:</strong> This ensures your money is set aside correctly as soon as you get paid.</p>
+    <hr>
+    <h3>6. Calculate Required Balances</h3>
+    <p>Find out how much you need in each account to cover upcoming expenses!</p>
+    <p>Select a <strong>cycle date</strong> (any day of the month to analyze from).</p>
+    <p>Click <strong>Calculate</strong>.</p>
+    <p>View:</p>
+    <p><strong>Upcoming bills & expenses</strong> for the selected period.</p>
+    <p><strong>Total required balance</strong> for each bank account.</p>
+    <p><strong>Surplus/Deficit</strong> (extra money left or shortage).</p>
+    <p><strong>Daily spend budget</strong> (how much you can safely spend per day).</p>
+    <p><strong>Why it matters:</strong> This helps you see if you have enough money and adjust before it’s too late.</p>
+    <hr>
+    <h3>7. Review Monthly &amp; Pay-Period Expense Totals</h3>
+    <p>Get a full breakdown of your expenses!</p>
+    <p><strong>Pay-Period Totals:</strong> Shows what’s due before your next paycheck.</p>
+    <p><strong>Monthly Totals:</strong> Gives an overview of all expenses in a month.</p>
+    <p><strong>Bank Account Breakdown:</strong> See which accounts are funding each expense.</p>
+    <p><strong>Why it matters:</strong> Tracking these numbers helps you fine-tune your budget over time.</p>
+    <hr>
+    <h2>Final Thoughts</h2>
+    <p>The Enhanced Cash Flow Manager gives you complete visibility into your finances. By keeping your paydays, bills, and account balances updated, you’ll always know where your money is going and how to stay on track.</p>
+    <p>Start using your tracker today and take control of your cash flow!</p>
+    <p><strong>Happy budgeting! 🎉</strong></p>
+  </div>
+  <button id="closeInstructionsBtn">Close</button>
+</dialog>
 
   <!--
     JavaScript Section:
@@ -1244,7 +1381,7 @@
         let effDay;
         if(pd.type === 'specific') {
           effDay = effectiveDueDate(pd.day, daysInMonth);
-        } else if(pd.type === '1st15') {
+        } else if(pd.type === '1st15'){
           effDay = (selectedDay >= 15) ? 15 : 1;
         } else if(pd.type === 'daily'){
           effDay = selectedDay;
@@ -1703,6 +1840,16 @@
       };
       reader.readAsText(file);
     });
+
+    /**************************************************************
+     * Instructions Dialog Event Listeners
+     **************************************************************/
+    document.getElementById('instructionsBtn').addEventListener('click', function() {
+      document.getElementById('instructionsDialog').showModal();
+    });
+    document.getElementById('closeInstructionsBtn').addEventListener('click', function() {
+      document.getElementById('instructionsDialog').close();
+    });
   </script>
 </body>
-</html> 
+</html>
