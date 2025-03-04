@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -417,11 +418,8 @@
     <h1>Enhanced Cash Flow Manager</h1>
     <!-- Intro Text -->
     <p id="intro-text">
-    With this Cash Flow Manager, you can easily track your income, expenses, and bank balances, giving you greater clarity around your finances.<br>
-    <strong>Your data stays private—everything is processed locally on your device. No data is stored or sent to any server.</strong><br>
-    <br>Want to learn more about how this tool works? Just click the 'Instructions' button below!
-</p>
-
+      With this Enhanced Cash Flow Manager, you can easily track your income, expenses, and bank balances, giving you full visibility and clarity around your finances. To learn more, click the "Instructions" button below.
+    </p>
     <!-- Instructions Button -->
     <button id="instructionsBtn">Instructions</button>
 
@@ -1340,86 +1338,100 @@
      * Calculates how many days until the next payday from the selected day.
      **************************************************************/
     function computeNextPaydayDiff(selectedDay, daysInMonth) {
-      let differences = [];
-      paydays.forEach(pd => {
-        let diff = 0;
-        if(pd.type === 'specific'){
-          let pdDay = effectiveDueDate(pd.day, daysInMonth);
-          if(pdDay >= selectedDay){
-            diff = pdDay - selectedDay;
-          } else {
-            diff = (daysInMonth - selectedDay) + pdDay;
-          }
-        } else if(pd.type === '1st15'){
-          if(selectedDay < 15){
-            diff = 14 - selectedDay;
-          } else {
-            diff = daysInMonth - selectedDay;
-          }
-        } else if(pd.type === 'daily'){
-          diff = 1;
-        } else if(pd.type === 'weekly'){
-          diff = 7;
-        } else if(pd.type === 'monthly'){
-          let pdDay = daysInMonth;
-          if(selectedDay <= pdDay){
-            diff = pdDay - selectedDay;
-          } else {
-            diff = (daysInMonth - selectedDay) + pdDay;
-          }
-        }
-        differences.push(diff);
-      });
-      return Math.min(...differences);
+  let differences = [];
+  paydays.forEach(pd => {
+    let diff = 0;
+    if(pd.type === 'specific'){
+      let pdDay = effectiveDueDate(pd.day, daysInMonth);
+      
+      if(pdDay >= selectedDay){
+        // If the specific day in this month hasn't occurred yet
+        diff = pdDay - selectedDay;
+      } else {
+        // Need to get next month's length and payday
+        const nextMonthDays = new Date(new Date(document.getElementById('cycleDate').value).getFullYear(), 
+                                      new Date(document.getElementById('cycleDate').value).getMonth() + 2, 0).getDate();
+        const nextMonthPayday = effectiveDueDate(pd.day, nextMonthDays);
+        
+        // Pay period extends to the day before that day in the next month
+        diff = (daysInMonth - selectedDay) + nextMonthPayday - 1;
+      }
+    } else if(pd.type === '1st15'){
+      if(selectedDay < 15){
+        diff = 14 - selectedDay;
+      } else {
+        diff = daysInMonth - selectedDay;
+      }
+    } else if(pd.type === 'daily'){
+      diff = 1;
+    } else if(pd.type === 'weekly'){
+      diff = 7;
+    } else if(pd.type === 'monthly'){
+      // For monthly paydays, pay period always ends on the last day of month
+      diff = daysInMonth - selectedDay;
     }
-
+    differences.push(diff);
+  });
+  return Math.min(...differences);
+}
     /**************************************************************
      * Helper Function: getMostRecentPaydayDay
      * Determines the most recent payday (or effective payday) relative to the selected day.
      **************************************************************/
     function getMostRecentPaydayDay(selectedDay, daysInMonth) {
-      let recentDay = -1;
-      let recentEffectiveDay = -1;
-      paydays.forEach(pd => {
-        let effDay;
-        if(pd.type === 'specific') {
-          effDay = effectiveDueDate(pd.day, daysInMonth);
-        } else if(pd.type === '1st15'){
-          effDay = (selectedDay >= 15) ? 15 : 1;
-        } else if(pd.type === 'daily'){
-          effDay = selectedDay;
-        } else if(pd.type === 'weekly'){
-          const offset = (selectedDay - 1) % 7; 
-          effDay = selectedDay - offset;
-        } else if(pd.type === 'monthly'){
-          effDay = daysInMonth;
-        }
-        if(effDay <= selectedDay && effDay > recentEffectiveDay) {
-          recentEffectiveDay = effDay;
-          recentDay = effDay;
-        }
-      });
-      if(recentDay === -1) {
-        let fallbackDay = 1;
-        paydays.forEach(pd => {
-          let effDay;
-          if(pd.type === 'specific'){
-            effDay = effectiveDueDate(pd.day, daysInMonth);
-          } else if(pd.type === '1st15'){
-            effDay = 15;
-          } else if(pd.type === 'daily'){
-            effDay = selectedDay;
-          } else if(pd.type === 'weekly'){
-            effDay = 1;
-          } else if(pd.type === 'monthly'){
-            effDay = daysInMonth;
-          }
-          if(effDay > fallbackDay) fallbackDay = effDay;
-        });
-        recentDay = fallbackDay;
+  let recentDay = -1;
+  let recentEffectiveDay = -1;
+  
+  paydays.forEach(pd => {
+    let effDay;
+    if(pd.type === 'specific') {
+      effDay = effectiveDueDate(pd.day, daysInMonth);
+      // If selected day is before the payday in current month, we need the payday from previous month
+      if(selectedDay < effDay) {
+        // Get previous month's effective payday
+        const prevMonthDays = new Date(new Date(document.getElementById('cycleDate').value).getFullYear(), 
+                                      new Date(document.getElementById('cycleDate').value).getMonth(), 0).getDate();
+        effDay = effectiveDueDate(pd.day, prevMonthDays);
       }
-      return recentDay;
+    } else if(pd.type === '1st15'){
+      effDay = (selectedDay >= 15) ? 15 : 1;
+    } else if(pd.type === 'daily'){
+      effDay = selectedDay;
+    } else if(pd.type === 'weekly'){
+      const offset = (selectedDay - 1) % 7; 
+      effDay = selectedDay - offset;
+    } else if(pd.type === 'monthly'){
+      // For monthly paydays, pay period always starts on day 1
+      effDay = 1;
     }
+    
+    if((effDay <= selectedDay || pd.type === 'monthly') && effDay > recentEffectiveDay) {
+      recentEffectiveDay = effDay;
+      recentDay = effDay;
+    }
+  });
+  
+  if(recentDay === -1) {
+    let fallbackDay = 1;
+    paydays.forEach(pd => {
+      let effDay;
+      if(pd.type === 'specific'){
+        effDay = effectiveDueDate(pd.day, daysInMonth);
+      } else if(pd.type === '1st15'){
+        effDay = 15;
+      } else if(pd.type === 'daily'){
+        effDay = selectedDay;
+      } else if(pd.type === 'weekly'){
+        effDay = 1;
+      } else if(pd.type === 'monthly'){
+        effDay = 1;  // Changed from daysInMonth to 1
+      }
+      if(effDay > fallbackDay) fallbackDay = effDay;
+    });
+    recentDay = fallbackDay;
+  }
+  return recentDay;
+}
 
     /**************************************************************
      * Calculation Function:
@@ -1435,27 +1447,59 @@
       const selectedDay = cycleDate.getDate();
       const currentDaysInMonth = new Date(cycleDate.getFullYear(), cycleDate.getMonth()+1, 0).getDate();
 
-      // Determine the start of the full pay period using the most recent payday
-      const fullPeriodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
+ // Find if there's a specific or monthly payday
+  const hasSpecificPayday = paydays.some(pd => pd.type === 'specific');
+  const hasMonthlyPayday = paydays.some(pd => pd.type === 'monthly');
+  
+  // Determine the start of the full pay period using the most recent payday
+  const fullPeriodStart = getMostRecentPaydayDay(selectedDay, currentDaysInMonth);
 
-      if (paydays.length === 0 && !balanceTrackingEnabled) {
-        alert("Please add at least one payday.");
-        return;
-      }
-
-      // Define the current pay period from the selected day to the next payday
-      const periodStart = selectedDay;
-      const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
-      let periodEnd = selectedDay + nextDiff;
-      let fullPeriodLength = (periodEnd >= fullPeriodStart)
-        ? (periodEnd - fullPeriodStart + 1)
-        : ((currentDaysInMonth - fullPeriodStart + 1) + periodEnd);
-      let remainingDays = (periodEnd >= selectedDay)
-        ? (periodEnd - selectedDay + 1)
-        : ((currentDaysInMonth - selectedDay + 1) + periodEnd);
-      const periodEndDisplay = (periodEnd <= currentDaysInMonth)
-        ? periodEnd
-        : (periodEnd - currentDaysInMonth) + " [next cycle]";
+  // Define the pay period appropriately
+  let periodStart, periodEnd, fullPeriodLength, remainingDays, periodEndDisplay;
+  
+  if (hasMonthlyPayday) {
+    // For monthly payday: 1st to last day of month
+    periodStart = 1;
+    periodEnd = currentDaysInMonth;
+    fullPeriodLength = currentDaysInMonth;
+    remainingDays = currentDaysInMonth - selectedDay + 1;
+    periodEndDisplay = periodEnd;
+  } else if (hasSpecificPayday) {
+    const specificPayday = paydays.find(pd => pd.type === 'specific');
+    const specificDay = effectiveDueDate(specificPayday.day, currentDaysInMonth);
+    
+    periodStart = fullPeriodStart;
+    
+    if (selectedDay >= specificDay) {
+      // We're past the payday in this month, so the period ends the day before the specific day next month
+      const nextMonthDays = new Date(cycleDate.getFullYear(), cycleDate.getMonth() + 2, 0).getDate();
+      const nextMonthPayday = effectiveDueDate(specificPayday.day, nextMonthDays);
+      periodEnd = specificDay - 1;
+      periodEndDisplay = `${nextMonthPayday - 1} [next month]`;
+      fullPeriodLength = (currentDaysInMonth - specificDay + 1) + (nextMonthPayday - 1);
+      remainingDays = (currentDaysInMonth - selectedDay) + (nextMonthPayday - 1);
+    } else {
+      // The specific day hasn't occurred yet this month
+      periodEnd = specificDay - 1;
+      periodEndDisplay = periodEnd;
+      fullPeriodLength = periodEnd - periodStart + 1;
+      remainingDays = periodEnd - selectedDay + 1;
+    }
+  } else {
+    // The existing logic for other payday types
+    periodStart = selectedDay;
+    const nextDiff = computeNextPaydayDiff(selectedDay, currentDaysInMonth);
+    periodEnd = selectedDay + nextDiff;
+    fullPeriodLength = (periodEnd >= fullPeriodStart)
+      ? (periodEnd - fullPeriodStart + 1)
+      : ((currentDaysInMonth - fullPeriodStart + 1) + periodEnd);
+    remainingDays = (periodEnd >= selectedDay)
+      ? (periodEnd - selectedDay + 1)
+      : ((currentDaysInMonth - selectedDay + 1) + periodEnd);
+    periodEndDisplay = (periodEnd <= currentDaysInMonth)
+      ? periodEnd
+      : (periodEnd - currentDaysInMonth) + " [next cycle]";
+  }
 
       document.getElementById('payPeriodRange').textContent =
         `This section displays the expenses for the current pay period (Day ${fullPeriodStart} to Day ${periodEndDisplay}, ${fullPeriodLength} days).`;
