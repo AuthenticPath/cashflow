@@ -962,10 +962,7 @@ document
           allocated = paycheck / bankAccounts.length;
         } else if (method === "custom") {
           let input = document.getElementById("customAlloc_" + account.id);
-          allocated =
-            input && input.value !== ""
-              ? parseFloat(input.value)
-              : paycheck / bankAccounts.length;
+          allocated = input && input.value !== "" ? parseFloat(input.value) : 0; // Should be 0 if left blank in custom allocation
         } else if (method === "single") {
           let selectedAccountId = document.getElementById(
             "singleAccountSelector"
